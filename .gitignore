@@ -1,0 +1,8 @@
+ftp.fu-berlin.de/*
+data/*
+raw_data/*
+
+.venv/
+
+!data/.gitkeep 
+!raw_data/.gitkeep
