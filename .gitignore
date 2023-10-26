@@ -2,7 +2,7 @@ ftp.fu-berlin.de/*
 data/*
 raw_data/*
 
-.venv/
+env/
 
 !data/.gitkeep 
 !raw_data/.gitkeep

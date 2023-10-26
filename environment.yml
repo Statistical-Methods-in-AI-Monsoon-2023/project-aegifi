@@ -1,0 +1,8 @@
+name: aegifi
+
+dependencies:
+  - matplotlib
+  - pandas
+  - pip
+  - python
+  - scikit-learn
