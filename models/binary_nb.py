@@ -4,6 +4,7 @@ from cuml.naive_bayes import BernoulliNB
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from datetime import datetime
+import pandas as pd
 
 X = 0 # load X
 y = 0 # load y
