@@ -5,9 +5,21 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from datetime import datetime
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import MultiLabelBinarizer
 
-X = 0 # load X
-y = 0 # load y
+
+filtered_df = pd.read_csv('./data/filtered_plots_and_genres.csv')
+
+mlb = MultiLabelBinarizer()
+
+X = filtered_df['plot']
+y = filtered_df['genres']
+
+y = mlb.fit_transform(y)
+
+vectorizer = TfidfVectorizer(stop_words='english')
+X = vectorizer.fit_transform(X)
 
 # split data into train and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
