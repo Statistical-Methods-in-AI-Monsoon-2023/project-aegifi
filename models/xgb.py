@@ -3,8 +3,15 @@ from utils import load_data
 from sklearn.multioutput import MultiOutputClassifier
 from datetime import datetime
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, hamming_loss, multilabel_confusion_matrix
+import cupy as cp
+from cupyx.scipy.sparse import spmatrix as cp_csr_matrix
 
 X_train, X_test, y_train, y_test = load_data()
+
+#X_train = cp_csr_matrix(X_train)
+#y_train = cp.array(y_train)
+#X_test = cp_csr_matrix(X_test)
+#y_test = cp.array(y_test)
 
 X_train = X_train[:200]
 y_train = y_train[:200]
@@ -12,13 +19,13 @@ X_test = X_test[:20]
 y_test = y_test[:20]
 
 
-xgb_estimator = xgb.XGBClassifier(verbosity=3, n_jobs=2)
+xgb_estimator = xgb.XGBClassifier(verbosity=3, tree_method="hist", device="cuda")
 
 # model = MultiOutputClassifier(xgb_estimator)
 
 print("Fitting model...")
 
-xgb_estimator.fit(X_train, y_train)
+xgb_estimator.fit(X_train[:20], y_train[:20])
 
 print("Predicting...")
 
