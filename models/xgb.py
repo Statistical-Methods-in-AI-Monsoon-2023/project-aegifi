@@ -2,26 +2,27 @@ import xgboost as xgb
 from utils import load_data
 from sklearn.multioutput import MultiOutputClassifier
 from datetime import datetime
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, hamming_loss, multilabel_confusion_matrix
 
 X_train, X_test, y_train, y_test = load_data()
 
-dtrain = xgb.DMatrix(X_train, label=y_train)
-dtest = xgb.DMatrix(X_test, label=y_test)
+X_train = X_train[:200]
+y_train = y_train[:200]
+X_test = X_test[:20]
+y_test = y_test[:20]
 
-print(dtrain, dtest)
 
-xgb_estimator = xgb.XGBClassifier(objective='binary:logistic')
+xgb_estimator = xgb.XGBClassifier(verbosity=3, n_jobs=2)
 
-model = MultiOutputClassifier(xgb_estimator)
+# model = MultiOutputClassifier(xgb_estimator)
 
 print("Fitting model...")
 
-model.fit(X_train, y_train)
+xgb_estimator.fit(X_train, y_train)
 
 print("Predicting...")
 
-y_pred = model.predict(X_test)
+y_pred = xgb_estimator.predict(X_test)
 
 print("Saving metrics...")
 
@@ -29,16 +30,13 @@ print("Saving metrics...")
 
 file_name = f'xgb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
 
-file_path = f'./metrics/{file_name}'
+file_path = f'metrics/{file_name}'
 
 with open(file_path, 'w') as f:
     
-        f.write(f'Accuracy: {accuracy_score(y_test, y_pred)}\n')
-    
-        f.write(f'Precision: {precision_score(y_test, y_pred, average="micro")}\n')
-    
-        f.write(f'Recall: {recall_score(y_test, y_pred, average="micro")}\n')
-    
-        f.write(f'F1: {f1_score(y_test, y_pred, average="micro")}\n')
-    
-        f.write(f'Confusion Matrix: {confusion_matrix(y_test, y_pred)}\n')
+    f.write(f'Accuracy: {accuracy_score(y_test, y_pred)}\n')
+    f.write(f'Hamming Score: {1 - hamming_loss(y_test, y_pred)}\n')
+    f.write(f'Precision: {precision_score(y_test, y_pred, average="micro", zero_division=1)}\n')
+    f.write(f'Recall: {recall_score(y_test, y_pred, average="micro", zero_division=1)}\n')
+    f.write(f'F1: {f1_score(y_test, y_pred, average="micro", zero_division=1)}\n')
+    f.write(f'Confusion Matrix: {multilabel_confusion_matrix(y_test, y_pred)}\n')

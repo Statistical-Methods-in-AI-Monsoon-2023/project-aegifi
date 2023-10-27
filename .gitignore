@@ -9,3 +9,5 @@ env/
 
 !data/.gitkeep 
 !raw_data/.gitkeep
+
+metrics/
