@@ -6,6 +6,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import cupy as cp
 from cupyx.scipy.sparse import spmatrix as cp_csr_matrix
 import time
+import pickle
 
 X_train, X_test, y_train, y_test = load_data()
 
@@ -15,10 +16,10 @@ X_train, X_test, y_train, y_test = load_data()
 #y_test_og = y_test
 #y_test = cp.array(y_test)
 
-X_train = X_train[:20000]
-y_train = y_train[:20000]
-X_test = X_test[:2000]
-y_test = y_test[:2000]
+#X_train = X_train[:20000]
+#y_train = y_train[:20000]
+#X_test = X_test[:2000]
+#y_test = y_test[:2000]
 
 
 xgb_estimator = xgb.XGBClassifier(verbosity=2, tree_method="hist", device="cuda")
@@ -38,6 +39,9 @@ print("Saving metrics...")
 
 # save metrics to file
 
+for i in range(5):
+    print(y_pred[i], y_test[i])
+
 file_name = f'xgb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
 
 file_path = f'metrics/{file_name}'
@@ -51,3 +55,8 @@ with open(file_path, 'w') as f:
     f.write(f'Recall: {recall_score(y_test, y_pred, average="micro", zero_division=1)}\n')
     f.write(f'F1: {f1_score(y_test, y_pred, average="micro", zero_division=1)}\n')
     f.write(f'Confusion Matrix: {multilabel_confusion_matrix(y_test, y_pred)}\n')
+
+# save model
+print("saving model..")
+pickle.dump(xgb_estimator, open("pretrained/xgb_tfidf.pkl", "wb"))
+print("model saved..")

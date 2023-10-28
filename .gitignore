@@ -4,6 +4,8 @@ raw_data/*
 
 env/
 
+word2vec/
+
 */__pycache__/*
 */.ipynb_checkpoints/*
 
