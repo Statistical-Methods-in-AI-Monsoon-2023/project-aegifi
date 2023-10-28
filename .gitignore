@@ -7,7 +7,8 @@ env/
 */__pycache__/*
 */.ipynb_checkpoints/*
 
-!data/.gitkeep 
+!data/.gitkeep
+!data/filtered_plots_and_genres.csv.zip 
 !raw_data/.gitkeep
 
 metrics/
