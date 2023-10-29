@@ -2,7 +2,7 @@
 
 To create environment:
 ```
-conda env create --prefix ./env --file environment.yml
+conda create --prefix ./env python=3.11.5 ipython
 
 conda install -c rapidsai -c nvidia -c conda-forge cuml-cpu=23.10
 ```

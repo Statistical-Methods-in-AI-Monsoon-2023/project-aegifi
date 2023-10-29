@@ -5,3 +5,4 @@ scikit-multilearn
 xgboost
 cupy-cuda11x
 gensim
+nltk

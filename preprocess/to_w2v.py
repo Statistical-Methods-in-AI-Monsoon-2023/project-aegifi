@@ -1,42 +1,42 @@
-from gensim.models import Word2Vec
+import gensim.downloader as api
+import pandas as pd
 import numpy as np
+from nltk.tokenize import word_tokenize
+from collections import Counter
+from sklearn.model_selection import train_test_split
+import re
+from tqdm import tqdm
 
-def sentences_to_word2vec_embeddings(sentences, word2vec_model):
-    """
-    Convert a list of sentences into Word2Vec embeddings.
+print(list(api.info()['models'].keys()))
+# if not 'word_vectors' in locals():  # so that it doesn't load again if it was already loaded
+word_vectors = api.load("word2vec-google-news-300")
 
-    Args:
-    - sentences: A list of sentences, where each sentence is a list of words.
-    - word2vec_model: A pre-trained Word2Vec model.
+vocab = np.load('vectorised_data/vocab.npy', allow_pickle=True)
 
-    Returns:
-    - A 2D numpy array where each row represents the Word2Vec embedding for a sentence.
-    """
-    embeddings = []
-    for sentence in sentences:
-        # Filter out words that are not in the vocabulary of the Word2Vec model.
-        words_in_vocab = [word for word in sentence if word in word2vec_model.wv]
-        
-        # If there are no words in the vocabulary, skip this sentence.
-        if not words_in_vocab:
-            continue
-        
-        # Calculate the mean of Word2Vec vectors for words in the sentence.
-        sentence_embedding = np.mean(word2vec_model[words_in_vocab], axis=0)
-        embeddings.append(sentence_embedding)
+embedding_matrix = []
+num_unknown_words = 0
+for word in vocab:
+    if word in word_vectors:
+        # embedding_matrix.append(word_vectors[word])
+        # print("Word {} found in w2v dict".format(word))
+        if len(word_vectors[word]) != config["embedding_dim"]:
+            print("Word {} size {} does not match embedding dim {}".format(
+                word, len(word_vectors[word]), config["embedding_dim"]))
+        else:
+            embedding_matrix.append(word_vectors[word])
+    else:
+        # print("Word {} not in w2v dict".format(word))
+        num_unknown_words += 1
+        embedding_matrix.append([0]*config["embedding_dim"])
 
-    return np.array(embeddings)
+print("Number of unknown words: ", num_unknown_words)
 
-df = pd.read_csv('data/filtered_plots_and_genres.csv')
-X = df['plot']
+print("Embedding matrix size: ", len(embedding_matrix))
+print("Embedding size: ", len(embedding_matrix[0]))
+print("Embedding matrix first row: ", embedding_matrix[56])
 
-# convert each plot into a list of words
-X = X.apply(lambda x: x.split())
+embedding_matrix = np.array(embedding_matrix) # since converting a list directly to tensor is very slow
+print("Embedding matrix shape: ", embedding_matrix.shape)
 
-#  convert X into a list of lists, where each inner list is a sentence
-X = X.tolist()
-
-
-
-# Load the pre-trained Word2Vec model.
-word2vec_model = Word2Vec.load('models/word2vec.model')
+# save the embedding matrix locally as npy file
+np.save('embeddings/embedding_matrix.npy', embedding_matrix)
