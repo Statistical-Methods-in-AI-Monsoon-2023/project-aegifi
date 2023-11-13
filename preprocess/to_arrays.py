@@ -82,7 +82,7 @@ X_text, X_tokens = preprocess_data(X)
 print("Time taken by preprocessing: ", time() - st)
 
 vectorizer = TfidfVectorizer()
-X = vectorizer.fit_transform(X)
+X = vectorizer.fit_transform(X_text)
 vectorizer.get_feature_names_out()
 
 print(X.shape, y.shape)

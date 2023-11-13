@@ -14,3 +14,5 @@ word2vec/
 !data/filtered_plots_and_genres.csv.zip 
 !raw_data/.gitkeep
 !embeddings/.gitkeep
+
+vectorised_data/X.npz
