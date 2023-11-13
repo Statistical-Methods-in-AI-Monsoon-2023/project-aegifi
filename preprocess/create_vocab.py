@@ -10,7 +10,6 @@ import re
 from tqdm import tqdm
 import json
 from time import time
-from multiprocessing import Pool
 import multiprocessing
 
 df = pd.read_csv('data/filtered_plots_and_genres.csv')

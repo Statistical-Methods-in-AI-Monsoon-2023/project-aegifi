@@ -3,8 +3,14 @@ import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 import scipy.sparse
-import cupy as cp
-import cupyx.scipy.sparse as csp
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from wordsegment import load, segment
+import json
+from time import time
+import multiprocessing
+import re
+from tqdm import tqdm
 
 df = pd.read_csv('data/filtered_plots_and_genres.csv')
 
@@ -23,19 +29,64 @@ y = y.apply(lambda row: [item.strip().strip("'") for item in row])
 # transform the y data
 y = mlb.fit_transform(y)
 
-vectorizer = TfidfVectorizer(stop_words='english')
+print("Preprocessing the data...")
+
+load()
+
+def preprocess(text):
+        """
+        Preprocesses the text
+        """    
+        text = text.lower()
+        text = re.sub(r"[^a-zA-Z;.]+", ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        text = re.sub(r'([;.])', r' \1 ', text)
+        tokens = word_tokenize(text)
+        
+        filtered_tokens = []
+        for word in tokens:
+            sep = segment(word)
+            if len(sep) > 1:
+                filtered_tokens.extend(sep)
+            else:
+                filtered_tokens.append(word)
+        tokens = filtered_tokens
+        tokens = [word for word in tokens if word not in (stopwords.words('english') + ['.', ';'])]
+        tokens = ['<EOS>' if token in ['.', ';'] else token for token in tokens]
+        
+        preprocessed_text = ' '.join(tokens)
+
+        return preprocessed_text, tokens
+
+def preprocess_parallel(args):
+    text = args[0]
+    return preprocess(text)
+
+def preprocess_data(data):
+
+    num_processes = multiprocessing.cpu_count() -1
+    print(f"Running {num_processes} processes in parallel")
+
+    pool = multiprocessing.Pool(processes=num_processes)
+
+    result_list = list(tqdm(pool.imap(preprocess_parallel, [(text,) for text in data]), total=len(data)))
+
+    pool.close()
+    pool.join()
+
+    return zip(*result_list)
+
+st = time()
+X_text, X_tokens = preprocess_data(X)
+
+print("Time taken by preprocessing: ", time() - st)
+
+vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(X)
 vectorizer.get_feature_names_out()
 
 print(X.shape, y.shape)
-print(type(X))
-X = csp.csr_matrix(X)
-print(type(X))
-
-y = cp.array(y)
 
 # save as numpy arrays
-#scipy.sparse.save_npz('vectorised_data/X.npz', X)
-cp.savez('vectorised_data/X_cp.npz', X)
-#np.save('vectorised_data/y.npy', y)
-cp.save('vectorised_data/y_cp.npy', y)
+scipy.sparse.save_npz('vectorised_data/X.npz', X)
+np.save('vectorised_data/y.npy', y)
