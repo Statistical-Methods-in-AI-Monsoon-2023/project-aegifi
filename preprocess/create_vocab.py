@@ -6,6 +6,7 @@ from collections import Counter
 from sklearn.model_selection import train_test_split
 import re
 from tqdm import tqdm
+import json
 
 df = pd.read_csv('data/filtered_plots_and_genres.csv')
 
@@ -31,6 +32,9 @@ def preprocess(text):
     text = text.replace('.', ' . ')
     text = text.replace('  ', ' ')
     tokens = word_tokenize(text)
+    for i in range(len(tokens)):
+        if tokens[i] == '.' or tokens[i] == ';':
+            tokens[i] = '<EOS>'            
     return text, tokens
 
 X_train_tokens = []
@@ -39,7 +43,8 @@ for text in tqdm(X_train):
     text, tokens = preprocess(text)
     X_train_tokens.append(tokens)
     X_train_text.append(text)
-# print(X_train_tokens[0], X_train_text[0])
+
+print(X_train_tokens[0], X_train_text[0])
 # exit(0)
 
 print("Creating the vocabulary...")
@@ -50,7 +55,7 @@ def create_vocab(train_sentences):
     # remove the words that appear only once
     # vocab_counter = Counter({word: freq for word, freq in vocab_counter.items() if freq > 1})
 
-    vocab = [word for word, freq in vocab_counter.items()]
+    vocab = ['<PAD>', '<UNK>', '<EOS>'] + [word for word, freq in vocab_counter.items()]
 
     word2idx = {word: idx for idx, word in enumerate(vocab)}
     idx2word = {idx: word for word, idx in word2idx.items()}
@@ -61,8 +66,13 @@ def create_vocab(train_sentences):
 
     # save the vocab as npy file
     np.save('vectorised_data/vocab.npy', vocab)
+    with open('vectorised_data/word2idx.json', 'w') as f:
+        json.dump(word2idx, f, indent=4)
+        
+    with open('vectorised_data/idx2word.json', 'w') as f:
+        json.dump(idx2word, f, indent=4)
 
     return vocab, word2idx, idx2word
 
-vocab, word2idx, idx2word = create_vocab(X_train_tokens)
+# vocab, word2idx, idx2word = create_vocab(X_train_tokens)
 
