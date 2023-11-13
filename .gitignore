@@ -1,6 +1,7 @@
 ftp.fu-berlin.de/*
 data/*
 raw_data/*
+embeddings/*
 
 env/
 
@@ -12,5 +13,4 @@ word2vec/
 !data/.gitkeep
 !data/filtered_plots_and_genres.csv.zip 
 !raw_data/.gitkeep
-
-metrics/
+!embeddings/.gitkeep
