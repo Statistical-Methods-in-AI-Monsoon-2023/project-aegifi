@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, hamming_loss, jaccard_score, classif
 import numpy as np
 
 class XGBModel:
-    def __init__(self, error_type="constant", load_models=False):
+    def __init__(self, error_type="constant", load_models=False, word_embeddings='w2v'):
         self.clf = xgb.XGBClassifier(verbosity=2, tree_method="hist", n_jobs=39)
         self.reg = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
@@ -16,6 +16,7 @@ class XGBModel:
         self.predict_time = 0
         self.error_type = error_type
         self.preds = None
+        self.word_embeddings = word_embeddings
     
     def error(self, a, b):
         if self.error_type == "constant":
@@ -55,6 +56,8 @@ class XGBModel:
         file_path = f'metrics/{file_name}'
 
         with open(file_path, 'w') as f:
+            f.write(f'Error type: {self.error_type}\n')
+            f.write(f'Word embeddings: {self.word_embeddings}\n')
             f.write(f'Train time: {self.train_time}\n')
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
@@ -65,8 +68,8 @@ class XGBModel:
             f.write(f'{classification_report(y_test, self.preds, zero_division=True)}\n')
 
     def save_model(self):
-        self.clf.save_model(f'pretrained/xgb_clf_w2v.json')
-        self.reg.save_model(f'pretrained/xgb_reg_w2v.json')
+        self.clf.save_model(f'pretrained/xgb_clf_{self.word_embeddings}.json')
+        self.reg.save_model(f'pretrained/xgb_reg_{self.word_embeddings}.json')
 
 class XGBRunner:
     def __init__(self, load_models=False, word_embeddings='w2v'):
@@ -84,7 +87,7 @@ class XGBRunner:
             self.X_train, self.X_test, self.y_train, self.y_test = load_data()
     
     def init_model(self):
-        self.model = XGBModel(load_models=self.load_models)
+        self.model = XGBModel(load_models=self.load_models, word_embeddings=self.word_embeddings)
 
     def run_training(self, save_model=False):
         self.load_data()

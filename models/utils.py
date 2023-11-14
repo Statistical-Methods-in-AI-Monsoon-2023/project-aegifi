@@ -17,6 +17,16 @@ def load_data(w2v=False):
         X_test = np.load('embeddings/test_embed.npy', allow_pickle=True)
     
     print('Loaded data')
+    
+    
+    # if w2v:
+    #     X_train = np.load('embeddings/train_embed.npy', allow_pickle=True)
+    #     X_test = np.load('embeddings/test_embed.npy', allow_pickle=True)
+    #     y = np.load('embeddings/y.npy')
+    #     y_train, y_test = train_test_split(y, test_size=0.2, random_state=42)
+    # else:
+    #     X = scipy.sparse.load_npz('vectorised_data/X.npz')
+    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     return X_train, X_test, y_train, y_test
 
