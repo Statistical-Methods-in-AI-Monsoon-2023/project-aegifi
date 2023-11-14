@@ -1,17 +1,21 @@
-from sklearn.naive_bayes import BernoulliNB
-from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
+from sklearn.naive_bayes import BernoulliNB, MultinomialNB, ComplementNB
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import accuracy_score, classification_report, hamming_loss, jaccard_score
 from datetime import datetime
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+import scipy
 import numpy as np
 from time import time
 
+import sys
+sys.path[0] += '/..'
 from utils import load_data, hit_rate
 
 if __name__ == '__main__':
     X_train, X_test, y_train, y_test = load_data()
 
-    model = OneVsRestClassifier(BernoulliNB(alpha=0.5))
+    model = OneVsRestClassifier(ComplementNB())
     train_time = time()
     model.fit(X_train, y_train)
     train_time = time() - train_time
@@ -25,7 +29,7 @@ if __name__ == '__main__':
         print(y_pred[i], y_test[i])
 
     # save metrics to file
-    file_name = f'binary_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
+    file_name = f'multinomial_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
     file_path = f'./metrics/{file_name}'
 
     with open(file_path, 'w') as f:
@@ -38,13 +42,13 @@ if __name__ == '__main__':
         f.write('Classification Report:\n')
         f.write(f'{classification_report(y_test, y_pred, zero_division=True)}\n')
 
-class BinaryNBRunner:
+class MultinomailNBRunner:
     def __init__(self, load_models=False):
         self.X_train = None
         self.X_test = None
         self.y_train = None
         self.y_test = None
-        self.model = OneVsRestClassifier(BernoulliNB())
+        self.model = OneVsRestClassifier(MultinomialNB())
         self.train_time = 0
         self.predict_time = 0
         self.preds = None

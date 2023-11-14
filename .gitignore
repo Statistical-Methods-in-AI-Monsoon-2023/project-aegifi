@@ -7,8 +7,8 @@ env/
 
 word2vec/
 
-*/__pycache__/*
-*/.ipynb_checkpoints/*
+__pycache__
+.ipynb_checkpoints
 
 !data/.gitkeep
 !data/filtered_plots_and_genres.csv.zip 
