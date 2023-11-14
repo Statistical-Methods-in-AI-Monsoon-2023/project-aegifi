@@ -35,14 +35,19 @@ class XGBModel:
 
     def fit(self, X, y):
         st = time.time()
+        print("Fitting classifier...")
         self.clf.fit(X, y)
         y_prob = self.clf.predict_proba(X)
+        print("Getting thresholds...")
         thresholds = self.get_thresholds(y_prob, y)
+        print("Fitting regressor...")
         self.reg.fit(y_prob, thresholds)
         self.train_time = time.time() - st
+        print("Done fitting model")
     
     def predict(self, X):
         st = time.time()
+        print("Predicting...")
         y_prob = self.clf.predict_proba(X)
         y_thresh = self.reg.predict(y_prob)
         y_pred = (y_prob >= y_thresh[:, None]).astype(int)
