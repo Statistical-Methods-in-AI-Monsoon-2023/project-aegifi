@@ -5,10 +5,13 @@ from datetime import datetime
 from sklearn.metrics import accuracy_score, hamming_loss, jaccard_score, classification_report
 import numpy as np
 
-class XGBModel():
-    def __init__(self, error_type="constant"):
+class XGBModel:
+    def __init__(self, error_type="constant", load_models=False):
         self.clf = xgb.XGBClassifier(verbosity=2, tree_method="hist", n_jobs=39)
         self.reg = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
+        if load_models:
+            self.clf.load_model('pretrained/xgb_clf_w2v.json')
+            self.reg.load_model('pretrained/xgb_reg_w2v.json')
         self.train_time = 0
         self.predict_time = 0
         self.error_type = error_type
@@ -65,71 +68,35 @@ class XGBModel():
         self.clf.save_model(f'pretrained/xgb_clf_w2v.json')
         self.reg.save_model(f'pretrained/xgb_reg_w2v.json')
 
-# load from embeddings
-print("Loading data...")
-X_train = np.load('embeddings/train_embed.npy', allow_pickle=True)
-X_test = np.load('embeddings/test_embed.npy', allow_pickle=True)
-_, _, y_train, y_test = load_data()
-
-# multi label prediction
-# xgb_classifier = xgb.XGBClassifier(verbosity=2, tree_method="hist", n_jobs=39)
-xgb_model = XGBModel(error_type="constant")
-
-# model = MultiOutputClassifier(xgb_classifier)
-
-print("Training model...")
-xgb_model.fit(X_train, y_train)
-xgb_model.predict(X_test)
-xgb_model.write_metrics(y_test)
-
-# print("Fitting model...")
-# st = time.time()
-# xgb_classifier.fit(X_train, y_train)
-# train_time =  time.time() - st
-
-# st = time.time()
-# print("Predicting...")
-
-# y_train_prob = xgb_classifier.predict_proba(X_train)
-# y_test_prob = xgb_classifier.predict_proba(X_test)
-
-# predict_time = time.time() - st
-# print("Saving metrics...")
+class XGBRunner:
+    def __init__(self, load_models=False, word_embeddings='w2v'):
+        self.load_models = load_models
+        self.word_embeddings = word_embeddings
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
     
-# thresholds = []
-# for prob, true_labels in zip(y_train_prob, y_train):
-#     # errors = np.sum(((prob > prob[:, None]) & (true_labels == 0) | (prob <= prob[:, None]) & (true_labels == 1)) * abs(prob[:, None] - prob), axis=1)
-#     errors = np.sum(((prob > prob[:, None]) & (true_labels == 0) | (prob <= prob[:, None]) & (true_labels == 1)), axis=1)
-#     thresholds.append(prob[np.argmin(errors)])
+    def load_data(self):
+        if self.word_embeddings == 'w2v':
+            self.X_train, self.X_test, self.y_train, self.y_test = load_data(w2v=True)
+        else:
+            self.X_train, self.X_test, self.y_train, self.y_test = load_data()
+    
+    def init_model(self):
+        self.model = XGBModel(load_models=self.load_models)
 
-# xgb_regressor = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
-
-# xgb_regressor.fit(y_train_prob, thresholds)
-
-# y_test_thresh = xgb_regressor.predict(y_test_prob)
-
-# predictions = (y_test_prob >= y_test_thresh[:, None]).astype(int)
-
-# print(f'Hit Rate: {hit_rate(y_test, predictions)}')
-# print(f'Jaccard Score: {jaccard_score(y_test, predictions, average="micro")}')
-
-
-# file_name = f'xgb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
-
-# file_path = f'metrics/{file_name}'
-
-# with open(file_path, 'w') as f:
-#     f.write(f'Train time: {train_time}\n')
-#     f.write(f'Predict time: {predict_time}\n')
-#     f.write(f'Accuracy: {accuracy_score(y_test, predictions)}\n')
-#     f.write(f'Hamming Score: {1 - hamming_loss(y_test, predictions)}\n')
-#     f.write(f'Jaccard Score: {jaccard_score(y_test, predictions, average="micro")}\n')
-#     f.write(f'Hit Rate: {hit_rate(y_test, predictions)}\n')
-#     f.write('Classification Report:\n')
-#     f.write(f'{classification_report(y_test, predictions, zero_division=True)}\n')
-#     # f.write(f'Confusion Matrix: {multilabel_confusion_matrix(y_test, y_pred)}\n')
-
-# # # save model
-# print("saving model..")
-# xgb_classifier.save_model(f'pretrained/xgb_w2v.json')
-# print("model saved..")
+    def run_training(self, save_model=False):
+        self.load_data()
+        self.init_model()
+        
+        self.model.fit(self.X_train, self.y_train)
+        if save_model:
+            self.model.save_model()
+    
+    def run_inference(self):
+        self.load_data()
+        self.init_model()
+        
+        self.model.predict(self.X_test)
+        self.model.write_metrics(self.y_test)
