@@ -3,6 +3,8 @@ data/*
 raw_data/*
 embeddings/*
 
+pretrained
+
 env/
 
 word2vec/
