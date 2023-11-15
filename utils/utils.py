@@ -1,32 +1,64 @@
 # utils file
-
+import pandas as pd
 import numpy as np
 import scipy.sparse
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+import json
+from nltk.tokenize import word_tokenize
 
-def load_data(w2v=False):
-    X = scipy.sparse.load_npz('vectorised_data/X.npz')
+def get_avg_embeddings(data, embedding_matrix, word2idx, name=None):
+    print('Getting average embeddings')
+    average_embeddings = []
+    for plot in tqdm(data):
+        plot_embeddings = []
+        for word in plot:
+            if word in word2idx:
+                plot_embeddings.append(embedding_matrix[word2idx[word]])
+            else:
+                plot_embeddings.append(embedding_matrix[word2idx['<UNK>']])
+        plot_embeddings = np.array(plot_embeddings)
+        
+        average_embeddings.append(np.mean(plot_embeddings, axis=0))
+        
+    average_embeddings = np.array(average_embeddings)
+    print(average_embeddings.shape)
+    print(average_embeddings[0])
+    
+    # np.save(f'embeddings/{name}.npy', average_embeddings)
+    return average_embeddings
+
+def load_w2v():
+    embed_matrix = np.load('embeddings/embedding_matrix.npy', allow_pickle=True)
+    word2idx = json.load(open('embeddings/word2idx.json', 'r'))
+    
+    df = pd.read_csv('data/preprocessed_data.csv')
+    X = df['plot']
+    # tokenize the data using word_tokenize
+    X_tokens = [ word_tokenize(plot) for plot in X ]
+    # get the average embeddings for the data
+    X_embed = get_avg_embeddings(X_tokens, embed_matrix, word2idx, 'embeddings/embed.npy')
+    
     y = np.load('vectorised_data/y.npy')
     
-
     # split data into train and test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    if w2v:
-        X_train = np.load('embeddings/train_embed.npy', allow_pickle=True)
-        X_test = np.load('embeddings/test_embed.npy', allow_pickle=True)
+    X_train, X_test, y_train, y_test = train_test_split(X_embed, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
+    return X_train, X_test, y_train, y_test
+
+def load_data(w2v=False):
+    if w2v:
+        return load_w2v()
     
-    # if w2v:
-    #     X_train = np.load('embeddings/train_embed.npy', allow_pickle=True)
-    #     X_test = np.load('embeddings/test_embed.npy', allow_pickle=True)
-    #     y = np.load('embeddings/y.npy')
-    #     y_train, y_test = train_test_split(y, test_size=0.2, random_state=42)
-    # else:
-    #     X = scipy.sparse.load_npz('vectorised_data/X.npz')
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X = scipy.sparse.load_npz('vectorised_data/X.npz')
+    y = np.load('vectorised_data/y.npy')
+    
+    # split data into train and test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    print('Loaded data')
 
     return X_train, X_test, y_train, y_test
 
