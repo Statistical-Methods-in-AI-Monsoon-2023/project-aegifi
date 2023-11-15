@@ -146,7 +146,7 @@ embedding_matrix = np.array(embedding_matrix) # since converting a list directly
 print("Embedding matrix shape: ", embedding_matrix.shape)
 
 # save the embedding matrix locally as npy file
-# np.save('embeddings/embedding_matrix.npy', embedding_matrix)
+np.save('embeddings/embedding_matrix.npy', embedding_matrix)
 
 def get_avg_embeddings(data, embedding_matrix, word2idx, name):
     average_embeddings = []
