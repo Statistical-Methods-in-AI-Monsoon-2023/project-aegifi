@@ -6,4 +6,4 @@ xgboost
 gensim
 nltk
 wordsegment
-torch
+torch==1.11

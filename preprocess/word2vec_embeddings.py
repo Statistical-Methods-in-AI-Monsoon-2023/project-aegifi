@@ -23,29 +23,9 @@ print("Preprocessing the data...")
 load()
 
 def preprocess(text):
-        """
-        Preprocesses the text
-        """    
-        text = text.lower()
-        text = re.sub(r"[^a-zA-Z;.]+", ' ', text)
-        text = re.sub(r'\s+', ' ', text).strip()
-        text = re.sub(r'([;.])', r' \1 ', text)
         tokens = word_tokenize(text)
-        
-        filtered_tokens = []
-        for word in tokens:
-            sep = segment(word)
-            if len(sep) > 1:
-                filtered_tokens.extend(sep)
-            else:
-                filtered_tokens.append(word)
-        tokens = filtered_tokens
-        tokens = [word for word in tokens if word not in (stopwords.words('english') + ['.', ';'])]
-        tokens = ['<EOS>' if token in ['.', ';'] else token for token in tokens]
-        
-        preprocessed_text = ' '.join(tokens)
 
-        return preprocessed_text, tokens
+        return text, tokens
 
 def preprocess_parallel(args):
     text = args[0]

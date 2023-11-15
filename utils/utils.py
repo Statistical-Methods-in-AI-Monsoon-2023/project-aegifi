@@ -53,20 +53,23 @@ def get_avg_embeddings(data, embedding_matrix, word2idx, name=None):
     return average_embeddings
 
 def load_w2v():
-    embed_matrix = np.load('embeddings/embedding_matrix.npy', allow_pickle=True)
-    word2idx = json.load(open('embeddings/word2idx.json', 'r'))
+    # embed_matrix = np.load('embeddings/embedding_matrix.npy', allow_pickle=True)
+    # word2idx = json.load(open('embeddings/word2idx.json', 'r'))
     
-    df = pd.read_csv('data/preprocessed_data.csv')
-    X = df['plot']
+    # df = pd.read_csv('data/preprocessed_data.csv')
+    # X = df['plot']
     # tokenize the data using word_tokenize
-    _,X_tokens = preprocess_data(X)
+    # _,X_tokens = preprocess_data(X)
     # get the average embeddings for the data
-    X_embed = get_avg_embeddings(X_tokens, embed_matrix, word2idx, 'embeddings/embed.npy')
+    # X_embed = get_avg_embeddings(X_tokens, embed_matrix, word2idx, 'embeddings/embed.npy')
+    
+    X_train = np.load('embeddings/train_embed.npy')
+    X_test = np.load('embeddings/test_embed.npy')
     
     y = np.load('vectorised_data/y.npy')
     
     # split data into train and test
-    X_train, X_test, y_train, y_test = train_test_split(X_embed, y, test_size=0.2, random_state=42)
+    y_train, y_test = train_test_split(y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     

@@ -6,11 +6,6 @@ from nltk.corpus import stopwords
 from wordsegment import load, segment
 import multiprocessing
 
-df = pd.read_csv('data/filtered_plots_and_genres.csv')
-X = df['plot']
-
-load()
-
 def preprocess(text):
         """
         Preprocesses the text
@@ -53,10 +48,6 @@ def preprocess_data(data):
     pool.join()
 
     return zip(*result_list)
-
-X_filtered, _ = preprocess_data(X)
-
-df['plot'] = X_filtered
 
 if __name__ == '__main__':
     df = pd.read_csv('data/filtered_plots_and_genres.csv')
