@@ -18,13 +18,6 @@ df = pd.read_csv('data/filtered_plots_and_genres.csv')
 X = df['plot']
 
 print(X.shape)
-
-X_train, X_test = train_test_split(X, test_size=0.2, random_state=42)
-# X_train = X_train[:100]
-# X_test = X_test[:20]
-
-# print(X_train[:5])
-
 print("Preprocessing the data...")
 
 load()
@@ -73,8 +66,7 @@ def preprocess_data(data):
     return zip(*result_list)
 
 st = time()
-X_train_text, X_train_tokens = preprocess_data(X_train)
-X_test_text, X_test_tokens = preprocess_data(X_test)
+X_text, X_tokens = preprocess_data(X)
 
 print("Time taken by preprocessing: ", time() - st)
 print("Creating the vocabulary...")
@@ -106,7 +98,7 @@ def create_vocab(train_sentences):
     
     return vocab, word2idx, idx2word
 
-vocab, word2idx, idx2word = create_vocab(X_train_tokens)
+vocab, word2idx, idx2word = create_vocab(X_tokens)
 
 print("Time taken by vocab creation: ", time() - st)
 
@@ -147,28 +139,3 @@ print("Embedding matrix shape: ", embedding_matrix.shape)
 
 # save the embedding matrix locally as npy file
 np.save('embeddings/embedding_matrix.npy', embedding_matrix)
-
-def get_avg_embeddings(data, embedding_matrix, word2idx, name):
-    average_embeddings = []
-    for plot in tqdm(data):
-        plot_embeddings = []
-        for word in plot:
-            if word in word2idx:
-                plot_embeddings.append(embedding_matrix[word2idx[word]])
-            else:
-                plot_embeddings.append(embedding_matrix[word2idx['<UNK>']])
-        plot_embeddings = np.array(plot_embeddings)
-        
-        average_embeddings.append(np.mean(plot_embeddings, axis=0))
-        
-    average_embeddings = np.array(average_embeddings)
-    print(average_embeddings.shape)
-    print(average_embeddings[0])
-    np.save(f'embeddings/{name}.npy', average_embeddings)
-
-st = time()
-
-get_avg_embeddings(X_train_tokens, embedding_matrix, word2idx, 'train_embed')
-get_avg_embeddings(X_test_tokens, embedding_matrix, word2idx, 'test_embed')
-
-print("Time taken by embedding creation: ", time() - st)
