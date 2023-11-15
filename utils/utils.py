@@ -6,6 +6,30 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import json
 from nltk.tokenize import word_tokenize
+import multiprocessing
+
+def preprocess(text):
+        tokens = word_tokenize(text)
+        return text,tokens
+
+def preprocess_parallel(args):
+    text = args[0]
+    return preprocess(text)
+
+def preprocess_data(data):
+
+    num_processes = multiprocessing.cpu_count() -1
+    print(f"Running {num_processes} processes in parallel")
+
+    pool = multiprocessing.Pool(processes=num_processes)
+
+    result_list = list(tqdm(pool.imap(preprocess_parallel, [(text,) for text in data]), total=len(data)))
+
+    pool.close()
+    pool.join()
+
+    return zip(*result_list)
+
 
 def get_avg_embeddings(data, embedding_matrix, word2idx, name=None):
     print('Getting average embeddings')
@@ -35,7 +59,7 @@ def load_w2v():
     df = pd.read_csv('data/preprocessed_data.csv')
     X = df['plot']
     # tokenize the data using word_tokenize
-    X_tokens = [ word_tokenize(plot) for plot in X ]
+    _,X_tokens = preprocess_data(X)
     # get the average embeddings for the data
     X_embed = get_avg_embeddings(X_tokens, embed_matrix, word2idx, 'embeddings/embed.npy')
     
