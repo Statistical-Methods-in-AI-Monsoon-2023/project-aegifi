@@ -13,6 +13,6 @@ class Model:
             raise Exception('Invalid model name')
 
 if __name__ == '__main__':
-    md = Model(model='xgb', word_embeddings='w2v', load_models=False)
-    md.model.run_training(save_model=True)
-    # runner.run_inference()
+    md = Model(model='xgb', word_embeddings='w2v', load_models=True)
+    # md.model.run_training(save_model=True)
+    md.model.run_inference()

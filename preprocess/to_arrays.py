@@ -9,7 +9,7 @@ from wordsegment import load, segment
 import json
 from time import time
 import multiprocessing
-import re
+import regex as re
 from tqdm import tqdm
 
 df = pd.read_csv('data/filtered_plots_and_genres.csv')

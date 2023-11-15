@@ -10,8 +10,8 @@ class XGBModel:
         self.clf = xgb.XGBClassifier(verbosity=2, tree_method="hist", n_jobs=39)
         self.reg = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.clf.load_model('pretrained/xgb_clf_w2v.json')
-            self.reg.load_model('pretrained/xgb_reg_w2v.json')
+            self.clf.load_model(f'pretrained/xgb_clf_{word_embeddings}.json')
+            self.reg.load_model(f'pretrained/xgb_reg_{word_embeddings}.json')
         self.train_time = 0
         self.predict_time = 0
         self.error_type = error_type
