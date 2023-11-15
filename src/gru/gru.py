@@ -1,5 +1,8 @@
 import torch
 import torch.nn as nn
+
+import sys
+sys.path[0] += '/../utils/'
 from utils import load_data, hit_rate
 
 class GRU(nn.Module):
