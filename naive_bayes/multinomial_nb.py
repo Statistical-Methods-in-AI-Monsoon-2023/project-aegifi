@@ -9,7 +9,7 @@ import numpy as np
 from time import time
 
 import sys
-sys.path[0] += '/..'
+sys.path[0] += '/../utils'
 from utils import load_data, hit_rate
 
 if __name__ == '__main__':
