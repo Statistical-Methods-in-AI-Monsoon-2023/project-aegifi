@@ -7,3 +7,4 @@ gensim
 nltk
 wordsegment
 torch==1.11
+torchtext==0.12.0

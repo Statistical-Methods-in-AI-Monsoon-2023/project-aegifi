@@ -9,8 +9,8 @@ from nltk.tokenize import word_tokenize
 import multiprocessing
 
 def preprocess(text):
-        tokens = word_tokenize(text)
-        return text,tokens
+    tokens = word_tokenize(text)
+    return text,tokens
 
 def preprocess_parallel(args):
     text = args[0]

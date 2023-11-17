@@ -3,13 +3,21 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import accuracy_score, jaccard_score, classification_report
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import torchtext.transforms as T 
+from torchtext.data.utils import get_tokenizer
+from torchtext.vocab import build_vocab_from_iterator
+from torch.nn.utils.rnn import pad_sequence
+import multiprocessing
+from tqdm import tqdm
 
 import sys
-sys.path[0] += '/../utils/'
-from utils import load_data, hit_rate
+sys.path[0] += '/../../utils/'
+from utils import load_data, hit_rate, preprocess_data
 
 class GRU(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, num_layers, learning_rate, dropout, bidirectional, device):
+    def __init__(self, input_size, hidden_size, output_size, vocab_size, num_layers, learning_rate, dropout, bidirectional, device):
         super(GRU, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -17,10 +25,11 @@ class GRU(nn.Module):
         self.bidirectional = bidirectional
         self.learning_rate = learning_rate
         
+        self.embedding = nn.Embedding(vocab_size, input_size)
         self.gru_layers = nn.ModuleList()
         self.norm_layers = nn.ModuleList()
         for _ in range(num_layers):
-            self.gru_layers.append(nn.GRUCell(input_size=input_size, hidden_size=hidden_size, device=device))
+            self.gru_layers.append(nn.GRU(input_size=input_size, hidden_size=hidden_size, device=device, bidirectional=bidirectional, batch_first=True))
             self.norm_layers.append(nn.LayerNorm(hidden_size * 2 if bidirectional else hidden_size))
             input_size = hidden_size * 2 if bidirectional else hidden_size
         
@@ -33,24 +42,28 @@ class GRU(nn.Module):
         # h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), x.size(0), self.hidden_size).to(self.device)
         # c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), x.size(0), self.hidden_size).to(self.device)
         
-        # Forward propagate LSTM
+        # Forward propagate LSTM pass in a mast to get the EOS token
+        
+            # eos_mask = (x == torch.tensor([2]).to(self.device).unsqueeze(0).unsqueeze(2)).any(dim=2)
+        # eos = (x == 2).nonzero()[:, 1]
+        # eos[eos == 0] = x.size(1)
+        x = self.embedding(x)
         for i in range(self.num_layers):
-            # print(i)
-            # print(h0[i].shape, x.shape, h0[i].get_device(), x.get_device())
-            x = self.gru_layers[i](x)
+            x, _ = self.gru_layers[i](x)
             x = self.norm_layers[i](x)
             x = self.dropout(x)
+            
+        # x = torch.stack([x[i, eos[i] - 1, :] for i in range(x.size(0))])
         
-        # Decode the hidden state of the last time step
-        # print(x.shape)
-        x = self.sigmoid(self.fc(x))
-        # x = self.dropout(x)
-        # print(x.shape)
+        
+        x = self.fc(x[:, -1, :])
+        x = self.sigmoid(x)
+        
         return x
-    
+        
     def get_name(self):
         return 'gru'
-    
+            
 
 def train_loop(model, train_loader, val_loader, criterion, device, epochs, save_model=False):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -103,18 +116,23 @@ elif torch.backends.mps.is_available():
     device = torch.device('mps')
 print('Using device:', device)
 
-model = GRU(input_size=300, hidden_size=128, output_size=20, num_layers=3, learning_rate=5e-4, dropout=0.5, bidirectional=False, device=device)
-model.to(device)
 # print(model)
+X = torch.load('./data/X.pt')
+y = np.load('./vectorised_data/y.npy')
 
-X_train, X_test, y_train, y_test = load_data(w2v=True)
+vocab = torch.load('./data/vocab.pt')
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = GRU(input_size=300, hidden_size=128, output_size=20, vocab_size=len(vocab), num_layers=3, learning_rate=5e-4, dropout=0.5, bidirectional=False, device=device)
+model.to(device)
 
 # create a dataloader for train and val
-train_loader = DataLoader(TensorDataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long()), batch_size=256, shuffle=True)
-val_loader = DataLoader(TensorDataset(torch.from_numpy(X_test).float(), torch.from_numpy(y_test).long()), batch_size=256, shuffle=False)
+train_loader = DataLoader(TensorDataset(X_train, torch.from_numpy(y_train).float()), batch_size=32, shuffle=True)
+val_loader = DataLoader(TensorDataset(X_test, torch.from_numpy(y_test).float()), batch_size=32, shuffle=False)
 
-criterion = nn.MultiLabelMarginLoss()
-train_loop(model, train_loader, val_loader, criterion, device, epochs=5, save_model=False)
+criterion = nn.BCELoss()
+train_loop(model, train_loader, val_loader, criterion, device, epochs=2, save_model=False)
 
 model.eval()
 
