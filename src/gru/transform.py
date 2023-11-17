@@ -22,6 +22,7 @@ def yield_tokens(data):
 vocab = build_vocab_from_iterator(yield_tokens(X),min_freq=5, specials=['<UNK>', '<SOS>', '<EOS>', '<PAD>'], special_first=True)
 vocab.set_default_index(vocab['<UNK>'])
 # print(vocab.get_itos())
+print("Vocab size: ", len(vocab))
 
 def getTransform(vocab):
     text_tranform = T.Sequential(
