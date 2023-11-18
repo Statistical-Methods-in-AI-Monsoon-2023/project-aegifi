@@ -2,10 +2,12 @@ import argparse
 import sys
 sys.path.append('./src/naive_bayes')
 sys.path.append('./src/xgboost')
+sys.path.append('./src/gru')
 
 from xgb_model import XGBRunner
 from binary_nb import BinaryNBRunner
 from multinomial_nb import MultinomailNBRunner
+from binary_gru import BinaryGRURunner
 
 class Model:
     def __init__(self, model='xgb', word_embeddings='w2v', load_models=False):
@@ -15,6 +17,8 @@ class Model:
             self.model = BinaryNBRunner(load_models=load_models)
         elif model == 'mnb':
             self.model = MultinomailNBRunner(load_models=load_models)
+        elif model == 'bgru':
+            self.model = BinaryGRURunner(load_models=load_models)
         else:
             raise Exception('Invalid model name')
 

@@ -75,7 +75,20 @@ def load_w2v():
     
     return X_train, X_test, y_train, y_test
 
-def load_data(w2v=False):
+def load_gru():
+    X = np.load('vectorised_data/X_gru.npy')
+    y = np.load('vectorised_data/y.npy')
+    
+    # split data into train and test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    print('Loaded data')
+    
+    return X_train, X_test, y_train, y_test
+
+def load_data(gru=False,w2v=False):
+    if gru:
+        return load_gru()
     if w2v:
         return load_w2v()
     
