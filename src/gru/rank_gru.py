@@ -1,43 +1,45 @@
 import numpy as np 
 import pandas as pd
 import tensorflow as tf
-from keras.callbacks import Callback
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
 from keras.layers import Dense, Embedding, GRU, LayerNormalization, RNN, GRUCell, SpatialDropout1D
 from sklearn.model_selection import train_test_split
 # from tensorflow.keras.utils import to_categorical
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.callbacks import EarlyStopping, Callback
 from keras.layers import Dropout
 import time
 from datetime import datetime
+import xgboost as xgb
 from sklearn.metrics import accuracy_score, jaccard_score, classification_report, hamming_loss
 
 import sys
-sys.path[0] += '/../utils/'
+sys.path[0] += '/../../utils/'
 from utils import load_data as ld, hit_rate
-
+# The maximum number of words to be used. (most frequent)
 MAX_NB_WORDS = 60000
+# Max number of words in each complaint.
 MAX_SEQUENCE_LENGTH = 250
+# This is fixed.
 EMBEDDING_DIM = 100
 
 class CustomSaver(Callback):
     def on_epoch_end(self, epoch, logs={}):
         # save after every epoch
-        self.model.save(f'./src/gru/pretrained/binary_gru_{epoch}.keras')
+        self.model.save(f'./src/gru/pretrained/rank_gru_{epoch}.keras')
 
-class BinaryGRU:
+class RankGRU:
     def __init__(self, load_models=False):
         self.train_time = 0
         self.predict_time = 0
         self.preds = None
         self.params = {
             'units': 128,
-            'dropout': 0.3,
+            'dropout': 0.2,
             'layers': 2,
-            'batch_size': 512,
-            'epochs': 5,
+            'batch_size': 256,
+            'epochs': 3,
             'lr': 0.001,
         }
         self.epochs = self.params['epochs']
@@ -50,39 +52,59 @@ class BinaryGRU:
         gpus = tf.config.list_physical_devices('GPU')
         if gpus:
             try:
-                tf.config.set_visible_devices(gpus[2], 'GPU')
+                tf.config.set_visible_devices(gpus[1], 'GPU')
                 logical_gpus = tf.config.list_logical_devices('GPU')
                 print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
             except RuntimeError as e:
+                # Visible devices must be set before GPUs have been initialized
                 print(e)
         
+        self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'binary_gru_2.keras'
+            self.model_name = 'rank_gru_2.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
+            self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_rank.json')
         else:
-            model = Sequential(name='BinaryGRU')
+            model = Sequential()
             model.add(Embedding(MAX_NB_WORDS, EMBEDDING_DIM, input_length=MAX_SEQUENCE_LENGTH))
-            # model.add(SpatialDropout1D(self.params['dropout']))
+            model.add(SpatialDropout1D(self.params['dropout']))
             for i in range(self.params['layers']):
-                model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1))
-                model.add(Dropout(self.params['dropout']))
-                # if i != self.params['layers']-1:
-                #     model.add(SpatialDropout1D(self.params['dropout']))
+                model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout'], dropout=self.params['dropout']))
                 model.add(LayerNormalization())
-            # model.add(Dropout(self.params['dropout']))
             model.add(Dense(20, activation='sigmoid'))
             optimizer = tf.keras.optimizers.Adam(learning_rate=self.params['lr'])
             model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=[tf.keras.metrics.CategoricalAccuracy()])
             print(model.summary())
             self.model = model
     
+    def get_thresholds(self, y_prob, y):
+        thresholds = []
+        for prob, true_labels in zip(y_prob, y):
+            errors = np.sum(((prob > prob[:, None]) & (true_labels == 0) | (prob <= prob[:, None]) & (true_labels == 1)) , axis=1)
+            thresholds.append(prob[np.argmin(errors)])
+        return thresholds
+
+    
     def fit(self, X, y):
         saver = CustomSaver()
-        st = time.time()
-        print("Fitting model...")
         
-        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_delta=0.0001)])
+        st = time.time()
+        print("Fitting GRU...")
+        
+        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001)])
+        
+        print("Done fitting GRU")
+        
+        probs = self.model.predict(X)
+        thresholds = self.get_thresholds(probs, y)
+        
+        print("Fitting XGB...")
+        
+        self.xgb_model.fit(probs, thresholds)
+        
+        print("Done fitting XGB")
+        
         
         self.train_time = time.time() - st
         print("Done fitting model")
@@ -92,15 +114,16 @@ class BinaryGRU:
         st = time.time()
         print("Predicting...")
         
-        self.preds = self.model.predict(X)
-        self.preds = np.round(self.preds)
+        preds = self.model.predict(X)
+        pred_thresholds = self.xgb_model.predict(preds)
+        self.preds = (preds >= pred_thresholds[:, None]).astype(int)
         
         self.predict_time = time.time() - st
         print(f"Predict time: {self.predict_time}")
         return self.preds
     
     def write_metrics(self, y_test):
-        file_name = f'binary_gru_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
+        file_name = f'rank_gru_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
 
         file_path = f'./src/gru/metrics/{file_name}'
 
@@ -117,10 +140,10 @@ class BinaryGRU:
             f.write(f'{classification_report(y_test, self.preds, zero_division=True)}\n')
 
     def save_model(self):
-        pass
-        # self.model.save(f'./src/gru/pretrained/binary_gru.keras')
+        self.model.save(f'./src/gru/pretrained/rank_gru.keras')
+        self.xgb_model.save_model(f'./src/gru/pretrained/xgb_reg_rank.json')
 
-class BinaryGRURunner:
+class RankGRURunner:
     def __init__(self, load_models=False):
         self.load_models = load_models
         self.X_train = None
@@ -131,8 +154,9 @@ class BinaryGRURunner:
     def load_data(self):
         self.X_train, self.X_test, self.y_train, self.y_test = ld(gru=True)
     
+    
     def init_model(self):
-        self.model = BinaryGRU(load_models=self.load_models)
+        self.model = RankGRU(load_models=self.load_models)
     
     def run_training(self):
         self.load_data()

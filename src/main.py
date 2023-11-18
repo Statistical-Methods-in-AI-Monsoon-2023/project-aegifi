@@ -8,18 +8,22 @@ from xgb_model import XGBRunner
 from binary_nb import BinaryNBRunner
 from multinomial_nb import MultinomailNBRunner
 from binary_gru import BinaryGRURunner
+from rank_gru import RankGRURunner
+from multinomial_gru import MultinomialGRURunner
 
 class Model:
     def __init__(self, model='xgb', word_embeddings='w2v', load_models=False):
-        if model == 'xgb':
-            self.model = XGBRunner(word_embeddings=word_embeddings, load_models=load_models)
-        elif model == 'bnb':
-            self.model = BinaryNBRunner(load_models=load_models)
-        elif model == 'mnb':
-            self.model = MultinomailNBRunner(load_models=load_models)
-        elif model == 'bgru':
-            self.model = BinaryGRURunner(load_models=load_models)
-        else:
+        models = {
+            'xgb': XGBRunner(word_embeddings=word_embeddings, load_models=load_models),
+            'bnb': BinaryNBRunner(load_models=load_models),
+            'mnb': MultinomailNBRunner(load_models=load_models),
+            'bgru': BinaryGRURunner(load_models=load_models),
+            'rgru': RankGRURunner(load_models=load_models),
+            'mgru': MultinomialGRURunner(load_models=load_models)
+        }
+        try:
+            self.model = models[model]
+        except KeyError:
             raise Exception('Invalid model name')
 
 if __name__ == '__main__':
