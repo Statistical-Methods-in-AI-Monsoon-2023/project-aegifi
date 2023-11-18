@@ -17,4 +17,4 @@ __pycache__
 !raw_data/.gitkeep
 !embeddings/.gitkeep
 
-vectorised_data/X.npz
+vectorised_data/
