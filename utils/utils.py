@@ -8,23 +8,21 @@ import json
 from nltk.tokenize import word_tokenize
 
 def load_w2v():
-    # embed_matrix = np.load('embeddings/embedding_matrix.npy', allow_pickle=True)
-    # word2idx = json.load(open('embeddings/word2idx.json', 'r'))
     
-    # df = pd.read_csv('data/preprocessed_data.csv')
-    # X = df['plot']
-    # tokenize the data using word_tokenize
-    # _,X_tokens = preprocess_data(X)
-    # get the average embeddings for the data
-    # X_embed = get_avg_embeddings(X_tokens, embed_matrix, word2idx, 'embeddings/embed.npy')
-    
-    X_train = np.load('embeddings/train_embed.npy')
-    X_test = np.load('embeddings/test_embed.npy')
-    
+    X = np.load('vectorised_data/X_w2v.npy')
     y = np.load('vectorised_data/y.npy')
     
-    # split data into train and test
-    y_train, y_test = train_test_split(y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    
+    print('Loaded data')
+    
+    return X_train, X_test, y_train, y_test
+
+def load_tf_w2v():
+    X = np.load('vectorised_data/X_tfidf_w2v.npy')
+    y = np.load('vectorised_data/y.npy')
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     
     print('Loaded data')
     
@@ -34,7 +32,6 @@ def load_gru():
     X = np.load('vectorised_data/X_gru.npy')
     y = np.load('vectorised_data/y.npy')
     
-    # split data into train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     
     print('Loaded data')
@@ -45,34 +42,32 @@ def load_bow():
     X = scipy.sparse.load_npz('vectorised_data/X_bow.npz')
     y = np.load('vectorised_data/y.npy')
     
-    # count class probabilities from 1d array using numpy operations
-    # probs = np.bincount(y) / len(y)
-    
-    # split data into train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     
     print('Loaded data')
-    # print('Loaded data')
     
     return X_train, X_test, y_train, y_test
 
-def load_data(gru=False,w2v=False, bow=False):
-    if gru:
-        return load_gru()
-    if w2v:
-        return load_w2v()
-    if bow:
-        return load_bow()
-    
-    X = scipy.sparse.load_npz('vectorised_data/X.npz')
+def load_tfidf():
+    X = scipy.sparse.load_npz('vectorised_data/X_tfidf.npz')
     y = np.load('vectorised_data/y.npy')
     
-    # split data into train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     
     print('Loaded data')
-
+    
     return X_train, X_test, y_train, y_test
+
+def load_data(word_embeddings='tfidf'):
+    loaders = {
+        'gru': load_gru,
+        'w2v': load_w2v,
+        'bow': load_bow,
+        'tf_w2v': load_tf_w2v,
+        'tfidf': load_tfidf
+    }
+
+    return loaders[word_embeddings]()
 
 def hit_rate(predicted, true):
     # Use element-wise logical AND to check if at least one class is predicted correctly

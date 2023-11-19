@@ -66,8 +66,8 @@ class XGBModel:
         file_path = f'./src/xgboost/metrics/{file_name}'
 
         with open(file_path, 'w') as f:
-            f.write(f'Error type: {self.error_type}\n')
-            f.write(f'Word embeddings: {self.word_embeddings}\n')
+            # f.write(f'Error type: {self.error_type}\n')
+            # f.write(f'Word embeddings: {self.word_embeddings}\n')
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(y_test, self.preds)}\n')
@@ -91,12 +91,7 @@ class XGBRunner:
         self.y_test = None
     
     def load_data(self):
-        if self.word_embeddings == 'w2v':
-            self.X_train, self.X_test, self.y_train, self.y_test = load_data(w2v=True)
-        elif self.word_embeddings == 'bow':
-            self.X_train, self.X_test, self.y_train, self.y_test = load_data(bow=True)
-        else:
-            self.X_train, self.X_test, self.y_train, self.y_test = load_data()
+        self.X_train, self.X_test, self.y_train, self.y_test = load_data(word_embeddings=self.word_embeddings)
     
     def init_model(self):
         self.model = XGBModel(load_models=self.load_models, word_embeddings=self.word_embeddings)

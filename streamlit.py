@@ -30,7 +30,7 @@ with col1:
         # add a button to select the word embeddings with word2vec selected by default
         word_embeddings = st.radio(
             'Select the word embeddings to use with XGBoost:',
-            ('Word 2 Vec', 'TF-IDF', 'Bag of Words'),
+            ('Word 2 Vec', 'TF-IDF', 'Bag of Words', 'TF-IDF Weighted Word 2 Vec'),
             index=0
         )
 
@@ -46,7 +46,8 @@ model_code = {
 embed_code = {
     'Word 2 Vec': 'w2v',
     "TF-IDF": 'tfidf',
-    'Bag of Words': 'bow'
+    'Bag of Words': 'bow',
+    'TF-IDF Weighted Word 2 Vec': 'tf_w2v'
 }
 
 

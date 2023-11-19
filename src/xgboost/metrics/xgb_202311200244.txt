@@ -1,0 +1,10 @@
+Error type: constant
+Word embeddings: bow
+Predict time: 0.6022250652313232
+Accuracy: 0.23666974880567113
+Hamming Score: 0.9278808368007397
+Jaccard Score: 0.4183858940500233
+Hit Rate: 0.8061334566188935
+F1 Score: 0.7775048300061217
+Precision Score: 0.619246712079294
+Recall Score: 0.6379813819957718

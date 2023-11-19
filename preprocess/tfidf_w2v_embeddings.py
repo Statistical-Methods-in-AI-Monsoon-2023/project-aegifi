@@ -145,4 +145,4 @@ X_embed = get_weighted_embeddings(X_tokens, embedding_matrix, word2idx, X_tfidf,
 
 print("Shape of TFIDF weighted embeddings: ", X_embed.shape)
 
-np.save(f'embeddings/X_tfidf_w2v.npy', X_embed)
+np.save(f'vectorised_data/X_tfidf_w2v.npy', X_embed)

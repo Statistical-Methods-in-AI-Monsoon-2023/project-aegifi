@@ -12,7 +12,7 @@ from keras.layers import Dropout
 import time
 from datetime import datetime
 import xgboost as xgb
-from sklearn.metrics import accuracy_score, jaccard_score, classification_report, hamming_loss
+from sklearn.metrics import accuracy_score, jaccard_score, classification_report, hamming_loss, f1_score, precision_score, recall_score
 
 import sys
 sys.path[0] += '/../../utils/'
@@ -129,16 +129,17 @@ class RankGRU:
         file_path = f'./src/gru/metrics/{file_name}'
 
         with open(file_path, 'w') as f:
-            f.write(f'Loaded from {self.model_name}\n')
-            f.write(f'params: {self.params}\n')
-            self.model.summary(print_fn=lambda x: f.write(x + '\n'))
+            # f.write(f'Loaded from {self.model_name}\n')
+            # f.write(f'params: {self.params}\n')
+            # self.model.summary(print_fn=lambda x: f.write(x + '\n'))
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(y_test, self.preds)}\n')
             f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="micro")}\n')
             f.write(f'Hit Rate: {hit_rate(y_test, self.preds)}\n')
-            f.write('Classification Report:\n')
-            f.write(f'{classification_report(y_test, self.preds, zero_division=True)}\n')
+            f.write(f'F1 Score: {f1_score(y_test, self.preds, average="samples", zero_division=True)}\n')
+            f.write(f'Precision Score: {precision_score(y_test, self.preds, average="samples", zero_division=True)}\n')
+            f.write(f'Recall Score: {recall_score(y_test, self.preds, average="samples", zero_division=True)}\n')
 
     def save_model(self):
         # self.model.save(f'./src/gru/pretrained/rank_gru.keras')
@@ -153,7 +154,7 @@ class RankGRURunner:
         self.y_test = None
     
     def load_data(self):
-        self.X_train, self.X_test, self.y_train, self.y_test = ld(gru=True)
+        self.X_train, self.X_test, self.y_train, self.y_test = ld(word_embeddings='gru')
     
     
     def init_model(self):

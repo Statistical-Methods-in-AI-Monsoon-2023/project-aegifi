@@ -132,4 +132,4 @@ X_embed = get_avg_embeddings(X_tokens, embedding_matrix, word2idx)
 
 print("Shape of average embeddings: ", X_embed.shape)
 
-np.save(f'embeddings/X_w2v.npy', X_embed)
+np.save(f'vectorised_data/X_w2v.npy', X_embed)

@@ -6,7 +6,7 @@ sys.path.append('./src/gru')
 
 from xgb_model import XGBRunner
 from binary_nb import BinaryNBRunner
-from multinomial_nb import MultinomailNBRunner
+from multinomial_nb import MultinomialNBRunner
 from binary_gru import BinaryGRURunner
 from rank_gru import RankGRURunner
 from multinomial_gru import MultinomialGRURunner
@@ -15,8 +15,8 @@ class Model:
     def __init__(self, model='xgb', word_embeddings='w2v', load_models=False):
         models = {
             'xgb': XGBRunner(word_embeddings=word_embeddings, load_models=load_models),
-            'bnb': BinaryNBRunner(load_models=load_models),
-            'mnb': MultinomailNBRunner(load_models=load_models),
+            'bnb': BinaryNBRunner(word_embeddings=word_embeddings, load_models=load_models),
+            'mnb': MultinomialNBRunner(word_embeddings=word_embeddings, load_models=load_models),
             'bgru': BinaryGRURunner(load_models=load_models),
             'rgru': RankGRURunner(load_models=load_models),
             'mgru': MultinomialGRURunner(load_models=load_models)

@@ -46,8 +46,8 @@ from utils import load_data, hit_rate
     #     f.write('Classification Report:\n')
     #     f.write(f'{classification_report(y_test, y_pred, zero_division=True)}\n')
 
-class MultinomailNBRunner:
-    def __init__(self, load_models=False):
+class MultinomialNBRunner:
+    def __init__(self, load_models=False, word_embeddings='w2v'):
         self.X_train = None
         self.X_test = None
         self.y_train = None
@@ -59,10 +59,11 @@ class MultinomailNBRunner:
         self.train_time = 0
         self.predict_time = 0
         self.preds = None
+        self.word_embeddings = word_embeddings
         
     def load_data(self):
         print("loading data...")
-        self.X_train, self.X_test, self.y_train, self.y_test = load_data(bow=True)
+        self.X_train, self.X_test, self.y_train, self.y_test = load_data(word_embeddings='bow')
     
     def save_model(self):
         # save using joblib
