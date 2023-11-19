@@ -58,7 +58,7 @@ class BinaryNBRunner:
         
     def load_data(self):
         print("loading data...")
-        self.X_train, self.X_test, self.y_train, self.y_test = load_data()
+        self.X_train, self.X_test, self.y_train, self.y_test = load_data(bow=True)
     
     def save_model(self):
         # save using joblib

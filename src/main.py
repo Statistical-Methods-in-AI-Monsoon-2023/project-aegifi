@@ -29,7 +29,10 @@ class Model:
 def streamlit_run(models, word_embeddings='w2v', load_models=False):
     for model in models:
         md = Model(model=model, word_embeddings=word_embeddings, load_models=load_models)
-        md.model.run_inference()
+        if load_models:
+            md.model.run_inference()
+        else:
+            md.model.run_training()
     
 if __name__ == '__main__':
     

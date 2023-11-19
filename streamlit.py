@@ -19,6 +19,7 @@ models = st.multiselect(
 st.markdown('#### Selected models:')
 st.markdown('\n'.join(['- ' + model for model in models]))
 
+word_embeddings = 'Word 2 Vec'
 if 'XGBoost' in models:
     # add a button to select the word embeddings with word2vec selected by default
     word_embeddings = st.radio(
@@ -41,6 +42,8 @@ embed_code = {
     "TF-IDF": 'tfidf',
     'Bag of Words': 'bow'
 }
+
+run_training = st.button('Run Training', disabled = len(models) == 0)
 
 # add button to run inference 
 run_inference = st.button('Run Inference', disabled = len(models) == 0)
@@ -76,3 +79,8 @@ if run_inference:
             with open(file, 'r') as f:
                 st.markdown(f'##### {file}')
                 st.markdown(f'```{f.read()}```')
+                
+if run_training:
+    st.write('Runnning training...')
+    streamlit_run([model_code[model] for model in models], word_embeddings=embed_code[word_embeddings], load_models=False)
+    st.write('Done!')

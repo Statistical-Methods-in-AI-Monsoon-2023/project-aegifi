@@ -10,38 +10,41 @@ from time import time
 from joblib import dump, load
 
 import sys
-sys.path[0] += '/../utils/'
+sys.path[0] += '/../../utils/'
 from utils import load_data, hit_rate
 
-if __name__ == '__main__':
-    X_train, X_test, y_train, y_test = load_data()
+# if __name__ == '__main__':
+#     X_train, X_test, y_train, y_test, prior_probs = load_data(bow=True)
 
-    model = OneVsRestClassifier(ComplementNB())
-    train_time = time()
-    model.fit(X_train, y_train)
-    train_time = time() - train_time
+#     model = MultinomialNB(class_prior=prior_probs)
+#     train_time = time()
+#     model.fit(X_train, y_train)
+#     train_time = time() - train_time
 
-    # predict on test data
-    predict_time = time()
-    y_pred = model.predict(X_test)
-    predict_time = time() - predict_time
+#     # predict on test data
+#     predict_time = time()
+#     y_pred = model.predict_proba(X_test)
+#     # select the preds with prob greater than prior prob
+#     y_pred = (y_pred > prior_probs).astype(int)
+#     predict_time = time() - predict_time
 
-    for i in range(10):
-        print(y_pred[i], y_test[i])
+#     for i in range(10):
+#         print(X_test[i],y_pred[i], y_test[i])
 
-    # save metrics to file
-    file_name = f'multinomial_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
-    file_path = f'./metrics/{file_name}'
+    # predictions = 
+    
+    # file_name = f'multinomial_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
+    # file_path = f'./metrics/{file_name}'
 
-    with open(file_path, 'w') as f:
-        f.write(f'Train time: {train_time}\n')
-        f.write(f'Predict time: {predict_time}\n')
-        f.write(f'Accuracy: {accuracy_score(y_test, y_pred)}\n')
-        f.write(f'Hamming Score: {1 - hamming_loss(y_test, y_pred)}\n')
-        f.write(f'Jaccard Score: {jaccard_score(y_test, y_pred, average="micro")}\n')
-        f.write(f'Hit Rate: {hit_rate(y_test, y_pred)}\n')
-        f.write('Classification Report:\n')
-        f.write(f'{classification_report(y_test, y_pred, zero_division=True)}\n')
+    # with open(file_path, 'w') as f:
+    #     f.write(f'Train time: {train_time}\n')
+    #     f.write(f'Predict time: {predict_time}\n')
+    #     f.write(f'Accuracy: {accuracy_score(y_test, y_pred)}\n')
+    #     f.write(f'Hamming Score: {1 - hamming_loss(y_test, y_pred)}\n')
+    #     f.write(f'Jaccard Score: {jaccard_score(y_test, y_pred, average="micro")}\n')
+    #     f.write(f'Hit Rate: {hit_rate(y_test, y_pred)}\n')
+    #     f.write('Classification Report:\n')
+    #     f.write(f'{classification_report(y_test, y_pred, zero_division=True)}\n')
 
 class MultinomailNBRunner:
     def __init__(self, load_models=False):
@@ -52,14 +55,14 @@ class MultinomailNBRunner:
         if load_models:
             self.load_model()
         else:
-            self.model = OneVsRestClassifier(MultinomialNB())
+            self.model = OneVsRestClassifier(ComplementNB())
         self.train_time = 0
         self.predict_time = 0
         self.preds = None
         
     def load_data(self):
         print("loading data...")
-        self.X_train, self.X_test, self.y_train, self.y_test = load_data()
+        self.X_train, self.X_test, self.y_train, self.y_test = load_data(bow=True)
     
     def save_model(self):
         # save using joblib
@@ -67,7 +70,7 @@ class MultinomailNBRunner:
     
     def load_model(self):
         # load using joblib
-        self.model = load(f'./src/naive_bayes/pretrained/multinomial_nb.joblib')
+        self.model = load(f'./src/naive_bayes/pretrained/best_multinomial_nb.joblib')
     
     def run_training(self):
         self.load_data()
@@ -82,7 +85,7 @@ class MultinomailNBRunner:
 
     
     def write_metrics(self):
-        file_name = f'binary_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
+        file_name = f'multi_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
         file_path = f'./src/naive_bayes/metrics/{file_name}'
         with open(file_path, 'w') as f:
             f.write(f'Predict time: {self.predict_time}\n')

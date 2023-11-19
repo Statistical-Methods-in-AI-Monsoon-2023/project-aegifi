@@ -57,7 +57,7 @@ class BinaryGRU:
                 print(e)
         
         if load_models:
-            self.model_name = 'binary_gru_1.keras'
+            self.model_name = 'good_binary_gru.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
         else:

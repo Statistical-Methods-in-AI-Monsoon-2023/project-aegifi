@@ -57,6 +57,7 @@ class XGBModel:
         y_pred = (y_prob >= y_thresh[:, None]).astype(int)
         self.predict_time = time.time() - st
         self.preds = y_pred
+        print(f"Predict time: {self.predict_time}")
         return y_pred
     
     def write_metrics(self, y_test):

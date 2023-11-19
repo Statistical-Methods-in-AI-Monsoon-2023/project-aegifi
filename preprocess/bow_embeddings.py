@@ -23,5 +23,5 @@ print("Time taken by vectorizer: ", time() - st)
 print(X.shape)
 
 # # save as numpy arrays
-scipy.sparse.save_npz('vectorised_data/X_tfidf.npz', X)
+scipy.sparse.save_npz('vectorised_data/X_bow.npz', X)
 np.save('vectorised_data/y.npy', y)

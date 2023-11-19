@@ -6,51 +6,6 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import json
 from nltk.tokenize import word_tokenize
-import multiprocessing
-
-def preprocess(text):
-    tokens = word_tokenize(text)
-    return text,tokens
-
-def preprocess_parallel(args):
-    text = args[0]
-    return preprocess(text)
-
-def preprocess_data(data):
-
-    num_processes = multiprocessing.cpu_count() -1
-    print(f"Running {num_processes} processes in parallel")
-
-    pool = multiprocessing.Pool(processes=num_processes)
-
-    result_list = list(tqdm(pool.imap(preprocess_parallel, [(text,) for text in data]), total=len(data)))
-
-    pool.close()
-    pool.join()
-
-    return zip(*result_list)
-
-
-def get_avg_embeddings(data, embedding_matrix, word2idx, name=None):
-    print('Getting average embeddings')
-    average_embeddings = []
-    for plot in tqdm(data):
-        plot_embeddings = []
-        for word in plot:
-            if word in word2idx:
-                plot_embeddings.append(embedding_matrix[word2idx[word]])
-            else:
-                plot_embeddings.append(embedding_matrix[word2idx['<UNK>']])
-        plot_embeddings = np.array(plot_embeddings)
-        
-        average_embeddings.append(np.mean(plot_embeddings, axis=0))
-        
-    average_embeddings = np.array(average_embeddings)
-    print(average_embeddings.shape)
-    print(average_embeddings[0])
-    
-    # np.save(f'embeddings/{name}.npy', average_embeddings)
-    return average_embeddings
 
 def load_w2v():
     # embed_matrix = np.load('embeddings/embedding_matrix.npy', allow_pickle=True)
@@ -80,23 +35,40 @@ def load_gru():
     y = np.load('vectorised_data/y.npy')
     
     # split data into train and test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     
     print('Loaded data')
     
     return X_train, X_test, y_train, y_test
 
-def load_data(gru=False,w2v=False):
+def load_bow():
+    X = scipy.sparse.load_npz('vectorised_data/X_bow.npz')
+    y = np.load('vectorised_data/y.npy')
+    
+    # count class probabilities from 1d array using numpy operations
+    # probs = np.bincount(y) / len(y)
+    
+    # split data into train and test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    
+    print('Loaded data')
+    # print('Loaded data')
+    
+    return X_train, X_test, y_train, y_test
+
+def load_data(gru=False,w2v=False, bow=False):
     if gru:
         return load_gru()
     if w2v:
         return load_w2v()
+    if bow:
+        return load_bow()
     
     X = scipy.sparse.load_npz('vectorised_data/X.npz')
     y = np.load('vectorised_data/y.npy')
     
     # split data into train and test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     
     print('Loaded data')
 
