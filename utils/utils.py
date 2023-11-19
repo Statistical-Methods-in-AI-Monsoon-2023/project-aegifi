@@ -89,6 +89,14 @@ class MetricReader:
         self.metrics = {}
         self.metric_types = []
         self.dfs = {}
+        self.model_name = {
+            'xgb': 'XGBoost',
+            'bgru': 'Binary GRU',
+            'rgru': 'Rank GRU',
+            'mgru': 'Multinomial GRU',
+            'bnb': 'Binary Naive Bayes',
+            'mnb': 'Multinomial Naive Bayes'
+        }
     
     def get_model_name(self, file_path):
         name_path =  file_path.split('/')[-1].split('.')[0]
@@ -112,8 +120,8 @@ class MetricReader:
             'Value': []
         }
         for model_name in self.metrics:
-            df_dict['Model'].append(model_name)
-            df_dict['Value'].append(self.metrics[model_name][metric_name])
+            df_dict['Model'].append(self.model_name[model_name])
+            df_dict['Value'].append(float(self.metrics[model_name][metric_name]))
         # create dataframe from dictionary
         df = pd.DataFrame(df_dict)
         self.dfs[metric_name] = df

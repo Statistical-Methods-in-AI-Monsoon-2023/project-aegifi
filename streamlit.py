@@ -85,20 +85,40 @@ if run_inference:
     if len(new_metrics_files) > 0:
         metric_reader = MetricReader(new_metrics_files)
         dfs = metric_reader.read_files()
-    
-        # there are 8 dfs for 8 metrics
-        # create bar charts for each metric
-        # 4 charts per row
-        num_rows = 2
-        num_cols = 4
-        rows = []
-        for i in range(num_rows):
-            rows.append(st.columns(num_cols))
+
+        st.markdown('## Metrics')
+        st.markdown('---')
+
+        # divide metrics into 2 different dicts
+        dfs_1 = {}
+        dfs_2 = {}
+        count = 0
+        for metric in dfs:
+            if count < 4:
+                dfs_1[metric] = {
+                    'df': dfs[metric],
+                    'col_idx': count % 4
+                }
+            else:
+                dfs_2[metric] = {
+                    'df': dfs[metric],
+                    'col_idx': count % 4
+                }
+            count += 1
         
-        for i in range(num_rows):
-            for j in range(num_cols):
-                with rows[i][j]:
-                    st.bar_chart(dfs[i*num_cols + j], x='Model', y='Value')
+        # display the metrics in 4 columns
+        cols_1 = st.columns(4)
+        for metric in dfs_1:
+            with cols_1[dfs_1[metric]['col_idx']]:
+                st.markdown(f'### {metric}')
+                st.bar_chart(dfs_1[metric]['df'], x='Model', y='Value')
+        
+        cols_2 = st.columns(4)
+        for metric in dfs_2:
+            with cols_2[dfs_2[metric]['col_idx']]:
+                st.markdown(f'### {metric}')
+                st.bar_chart(dfs_2[metric]['df'], x='Model', y='Value')
+            
 
 if run_training:
     with col2:

@@ -1,0 +1,1 @@
+streamlit run streamlit.py --server.headless true --server.fileWatcherType none

@@ -1,6 +1,6 @@
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB, ComplementNB
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.metrics import accuracy_score, classification_report, hamming_loss, jaccard_score
+from sklearn.metrics import accuracy_score, hamming_loss, jaccard_score, f1_score, precision_score, recall_score
 from datetime import datetime
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -93,8 +93,9 @@ class MultinomailNBRunner:
             f.write(f'Hamming Score: {1 - hamming_loss(self.y_test, self.preds)}\n')
             f.write(f'Jaccard Score: {jaccard_score(self.y_test, self.preds, average="micro")}\n')
             f.write(f'Hit Rate: {hit_rate(self.y_test, self.preds)}\n')
-            f.write('Classification Report:\n')
-            f.write(f'{classification_report(self.y_test, self.preds, zero_division=True)}\n')
+            f.write(f'F1 Score: {f1_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
+            f.write(f'Precision Score: {precision_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
+            f.write(f'Recall Score: {recall_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
     
     def run_inference(self):
         self.load_data()

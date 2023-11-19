@@ -1,6 +1,6 @@
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
-from sklearn.metrics import accuracy_score, classification_report, hamming_loss, jaccard_score
+from sklearn.metrics import accuracy_score, hamming_loss, jaccard_score, f1_score, precision_score, recall_score
 from datetime import datetime
 import pandas as pd
 import numpy as np
@@ -39,8 +39,9 @@ if __name__ == '__main__':
         f.write(f'Hamming Score: {1 - hamming_loss(y_test, y_pred)}\n')
         f.write(f'Jaccard Score: {jaccard_score(y_test, y_pred, average="micro")}\n')
         f.write(f'Hit Rate: {hit_rate(y_test, y_pred)}\n')
-        f.write('Classification Report:\n')
-        f.write(f'{classification_report(y_test, y_pred, zero_division=True)}\n')
+        f.write(f'F1 Score: {f1_score(y_test, y_pred, average="samples", zero_division=True)}\n')
+        f.write(f'Precision Score: {precision_score(y_test, y_pred, average="samples", zero_division=True)}\n')
+        f.write(f'Recall Score: {recall_score(y_test, y_pred, average="samples", zero_division=True)}\n')
 
 class BinaryNBRunner:
     def __init__(self, load_models=False):
@@ -88,8 +89,9 @@ class BinaryNBRunner:
             f.write(f'Hamming Score: {1 - hamming_loss(self.y_test, self.preds)}\n')
             f.write(f'Jaccard Score: {jaccard_score(self.y_test, self.preds, average="micro")}\n')
             f.write(f'Hit Rate: {hit_rate(self.y_test, self.preds)}\n')
-            f.write('Classification Report:\n')
-            f.write(f'{classification_report(self.y_test, self.preds, zero_division=True)}\n')
+            f.write(f'F1 Score: {f1_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
+            f.write(f'Precision Score: {precision_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
+            f.write(f'Recall Score: {recall_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
     
     def run_inference(self):
         self.load_data()
