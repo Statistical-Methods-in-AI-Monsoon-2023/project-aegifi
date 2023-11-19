@@ -91,6 +91,8 @@ class XGBRunner:
     def load_data(self):
         if self.word_embeddings == 'w2v':
             self.X_train, self.X_test, self.y_train, self.y_test = load_data(w2v=True)
+        elif self.word_embeddings == 'bow':
+            self.X_train, self.X_test, self.y_train, self.y_test = load_data(bow=True)
         else:
             self.X_train, self.X_test, self.y_train, self.y_test = load_data()
     

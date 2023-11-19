@@ -6,5 +6,6 @@ xgboost
 gensim
 nltk
 wordsegment
+streamlit
 torch==1.11
 torchtext==0.12.0
