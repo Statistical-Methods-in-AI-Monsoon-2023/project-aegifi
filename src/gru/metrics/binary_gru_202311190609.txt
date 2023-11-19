@@ -1,0 +1,63 @@
+Loaded from binary_gru_3.keras
+params: {'units': 128, 'dropout': 0.2, 'layers': 2, 'batch_size': 128, 'epochs': 5, 'lr': 0.001}
+Model: "BinaryGRU"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ embedding (Embedding)       (None, 250, 100)          6000000   
+                                                                 
+ gru (GRU)                   (None, 250, 128)          88320     
+                                                                 
+ dropout (Dropout)           (None, 250, 128)          0         
+                                                                 
+ layer_normalization (Layer  (None, 250, 128)          256       
+ Normalization)                                                  
+                                                                 
+ gru_1 (GRU)                 (None, 128)               99072     
+                                                                 
+ dropout_1 (Dropout)         (None, 128)               0         
+                                                                 
+ layer_normalization_1 (Lay  (None, 128)               256       
+ erNormalization)                                                
+                                                                 
+ dense (Dense)               (None, 20)                2580      
+                                                                 
+=================================================================
+Total params: 6190484 (23.61 MB)
+Trainable params: 6190484 (23.61 MB)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________
+Predict time: 202.10076689720154
+Accuracy: 0.2624633995993219
+Hamming Score: 0.9260556326090307
+Jaccard Score: 0.37758824769348015
+Hit Rate: 0.7458776390815226
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.53      0.40      0.46      4821
+           1       0.49      0.29      0.36      3374
+           2       0.64      0.49      0.56      3203
+           3       0.51      0.31      0.38      2718
+           4       0.65      0.64      0.65     14502
+           5       0.48      0.38      0.42      3636
+           6       0.70      0.70      0.70     23686
+           7       0.51      0.28      0.36      4101
+           8       0.43      0.27      0.33      2982
+           9       0.48      0.34      0.40      2427
+          10       0.65      0.56      0.60      3935
+          11       0.66      0.58      0.62      2586
+          12       0.41      0.15      0.22      1131
+          13       0.34      0.14      0.20      2647
+          14       0.42      0.26      0.33      5494
+          15       0.60      0.53      0.57      2767
+          16       0.71      0.60      0.65      1270
+          17       0.48      0.32      0.38      5442
+          18       0.53      0.50      0.51      1420
+          19       0.79      0.69      0.73      1229
+
+   micro avg       0.61      0.50      0.55     93371
+   macro avg       0.55      0.42      0.47     93371
+weighted avg       0.59      0.50      0.53     93371
+ samples avg       0.67      0.56      0.76     93371
+

@@ -8,7 +8,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Embedding, GRU, LayerNormalization, RNN, GRUCell, SpatialDropout1D
 from sklearn.model_selection import train_test_split
 # from tensorflow.keras.utils import to_categorical
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.layers import Dropout
 import time
 import xgboost as xgb
@@ -19,7 +19,7 @@ import sys
 sys.path[0] += '/../utils/'
 from utils import load_data as ld, hit_rate
 
-MAX_NB_WORDS = 60000
+MAX_NB_WORDS = 40000
 MAX_SEQUENCE_LENGTH = 250
 EMBEDDING_DIM = 100
 
@@ -36,8 +36,8 @@ class MultinomialGRU:
             'units': 128,
             'dropout': 0.2,
             'layers': 2,
-            'batch_size': 256,
-            'epochs': 3,
+            'batch_size': 128,
+            'epochs': 10,
             'lr': 0.001,
         }
         self.epochs = self.params['epochs']
@@ -58,16 +58,17 @@ class MultinomialGRU:
         
         self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'multinomial_gru_1.keras'
+            self.model_name = 'multinomial_gru_0.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
             self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_multi.json')
         else:
             model = Sequential()
             model.add(Embedding(MAX_NB_WORDS, EMBEDDING_DIM, input_length=MAX_SEQUENCE_LENGTH))
-            # model.add(SpatialDropout1D(self.params['dropout']))
+            model.add(SpatialDropout1D(self.params['dropout']))
             for i in range(self.params['layers']):
-                model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout']))
+                model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout'], dropout=self.params['dropout']))
+                model.add(Dropout(self.params['dropout']))
                 model.add(LayerNormalization())
             model.add(Dense(20, activation='softmax'))
             optimizer = tf.keras.optimizers.Adam(learning_rate=self.params['lr'])
@@ -103,7 +104,7 @@ class MultinomialGRU:
         print("Fitting GRU...")
         
         y = self.transform_labels(y)
-        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001)])
+        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=2, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_delta=0.0001)])
         
         print("Done fitting GRU")
         

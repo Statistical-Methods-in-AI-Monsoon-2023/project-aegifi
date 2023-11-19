@@ -34,10 +34,10 @@ class BinaryGRU:
         self.preds = None
         self.params = {
             'units': 128,
-            'dropout': 0.3,
+            'dropout': 0.2,
             'layers': 2,
-            'batch_size': 512,
-            'epochs': 5,
+            'batch_size': 128,
+            'epochs': 10,
             'lr': 0.001,
         }
         self.epochs = self.params['epochs']
@@ -57,18 +57,16 @@ class BinaryGRU:
                 print(e)
         
         if load_models:
-            self.model_name = 'binary_gru_2.keras'
+            self.model_name = 'binary_gru_1.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
         else:
             model = Sequential(name='BinaryGRU')
             model.add(Embedding(MAX_NB_WORDS, EMBEDDING_DIM, input_length=MAX_SEQUENCE_LENGTH))
-            # model.add(SpatialDropout1D(self.params['dropout']))
+            model.add(SpatialDropout1D(self.params['dropout']))
             for i in range(self.params['layers']):
-                model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1))
+                model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout'], dropout=self.params['dropout']))
                 model.add(Dropout(self.params['dropout']))
-                # if i != self.params['layers']-1:
-                #     model.add(SpatialDropout1D(self.params['dropout']))
                 model.add(LayerNormalization())
             # model.add(Dropout(self.params['dropout']))
             model.add(Dense(20, activation='sigmoid'))
@@ -82,7 +80,7 @@ class BinaryGRU:
         st = time.time()
         print("Fitting model...")
         
-        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_delta=0.0001)])
+        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=2, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_delta=0.0001)])
         
         self.train_time = time.time() - st
         print("Done fitting model")

@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Embedding, GRU, LayerNormalization, RNN, GRUCell, SpatialDropout1D
 from sklearn.model_selection import train_test_split
 # from tensorflow.keras.utils import to_categorical
-from keras.callbacks import EarlyStopping, Callback
+from keras.callbacks import EarlyStopping, Callback, ReduceLROnPlateau
 from keras.layers import Dropout
 import time
 from datetime import datetime
@@ -38,8 +38,8 @@ class RankGRU:
             'units': 128,
             'dropout': 0.2,
             'layers': 2,
-            'batch_size': 256,
-            'epochs': 3,
+            'batch_size': 128,
+            'epochs': 10,
             'lr': 0.001,
         }
         self.epochs = self.params['epochs']
@@ -61,7 +61,7 @@ class RankGRU:
         
         self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'rank_gru_2.keras'
+            self.model_name = 'rank_gru_0.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
             self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_rank.json')
@@ -71,6 +71,7 @@ class RankGRU:
             model.add(SpatialDropout1D(self.params['dropout']))
             for i in range(self.params['layers']):
                 model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout'], dropout=self.params['dropout']))
+                model.add(Dropout(self.params['dropout']))
                 model.add(LayerNormalization())
             model.add(Dense(20, activation='sigmoid'))
             optimizer = tf.keras.optimizers.Adam(learning_rate=self.params['lr'])
@@ -92,7 +93,7 @@ class RankGRU:
         st = time.time()
         print("Fitting GRU...")
         
-        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001)])
+        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.4, patience=1, min_delta=0.0001)])
         
         print("Done fitting GRU")
         
@@ -140,7 +141,7 @@ class RankGRU:
             f.write(f'{classification_report(y_test, self.preds, zero_division=True)}\n')
 
     def save_model(self):
-        self.model.save(f'./src/gru/pretrained/rank_gru.keras')
+        # self.model.save(f'./src/gru/pretrained/rank_gru.keras')
         self.xgb_model.save_model(f'./src/gru/pretrained/xgb_reg_rank.json')
 
 class RankGRURunner:
