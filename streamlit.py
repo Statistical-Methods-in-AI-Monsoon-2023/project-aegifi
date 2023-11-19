@@ -17,7 +17,7 @@ st.markdown('## Predicting Movie Genres from Plot Summaries')
 
 st.markdown('---')
 
-col1,_, col2 = st.columns((2,1,2))
+col1,mid_col, col2 = st.columns((1,1,1))
 
 with col1:
     models = st.multiselect(
@@ -25,14 +25,60 @@ with col1:
         ['Binary Naive Bayes', 'Multinomial Naive Bayes', 'XGBoost', 'Binary GRU', 'Rank GRU', 'Multinomial GRU'],
     )
 
-    word_embeddings = 'Word 2 Vec'
+with mid_col:
+    xgb_word_embeddings = []
+    bnb_word_embeddings = []
+    mnb_word_embeddings = []
     if 'XGBoost' in models:
-        # add a button to select the word embeddings with word2vec selected by default
-        word_embeddings = st.radio(
-            'Select the word embeddings to use with XGBoost:',
-            ('Word 2 Vec', 'TF-IDF', 'Bag of Words', 'TF-IDF Weighted Word 2 Vec'),
-            index=0
-        )
+        # add a checkboxes for word embeddings
+        with st.expander('Select the word embeddings you want to use with XGBoost:'):
+            xgb_w2v = st.checkbox('Word 2 Vec', value=True, key='xgb_w2v')
+            xgb_bow = st.checkbox('Bag of Words', key='xgb_bow')
+            xgb_tfidf = st.checkbox('TF-IDF', key='xgb_tfidf')
+            xgb_tf_w2v = st.checkbox('TF-IDF Weighted Word 2 Vec', key='xgb_tf_w2v')
+            
+            if xgb_w2v:
+                xgb_word_embeddings.append('Word 2 Vec')
+            if xgb_bow:
+                xgb_word_embeddings.append('Bag of Words')
+            if xgb_tfidf:
+                xgb_word_embeddings.append('TF-IDF')
+            if xgb_tf_w2v:
+                xgb_word_embeddings.append('TF-IDF Weighted Word 2 Vec')
+    
+    if 'Binary Naive Bayes' in models:
+        with st.expander('Select the word embeddings you want to use with Binary Naive Bayes:'):
+            # add a checkboxes for word embeddings
+            bnb_w2v = st.checkbox('Word 2 Vec', value=True, key='bnb_w2v')
+            bnb_bow = st.checkbox('Bag of Words', key='bnb_bow')
+            bnb_tfidf = st.checkbox('TF-IDF', key='bnb_tfidf')
+            bnb_tf_w2v = st.checkbox('TF-IDF Weighted Word 2 Vec', key='bnb_tf_w2v')
+            
+            if bnb_w2v:
+                bnb_word_embeddings.append('Word 2 Vec')
+            if bnb_bow:
+                bnb_word_embeddings.append('Bag of Words')
+            if bnb_tfidf:
+                bnb_word_embeddings.append('TF-IDF')
+            if bnb_tf_w2v:
+                bnb_word_embeddings.append('TF-IDF Weighted Word 2 Vec')
+
+    if 'Multinomial Naive Bayes' in models:
+        with st.expander('Select the word embeddings you want to use with Multinomial Naive Bayes:'):
+            # add a checkboxes for word embeddings
+            mnb_w2v = st.checkbox('Word 2 Vec', value=True, key='mnb_w2v')
+            mnb_bow = st.checkbox('Bag of Words', key='mnb_bow')
+            mnb_tfidf = st.checkbox('TF-IDF', key='mnb_tfidf')
+            mnb_tf_w2v = st.checkbox('TF-IDF Weighted Word 2 Vec', key='mnb_tf_w2v')
+            
+            if mnb_w2v:
+                mnb_word_embeddings.append('Word 2 Vec')
+            if mnb_bow:
+                mnb_word_embeddings.append('Bag of Words')
+            if mnb_tfidf:
+                mnb_word_embeddings.append('TF-IDF')
+            if mnb_tf_w2v:
+                mnb_word_embeddings.append('TF-IDF Weighted Word 2 Vec')
 
 model_code = {
     "Binary Naive Bayes": "bnb",
@@ -71,7 +117,21 @@ if run_inference:
     
     with col2:
         with st.spinner('Inference in progress...'):
-            streamlit_run([model_code[model] for model in models], word_embeddings=embed_code[word_embeddings], load_models=True)
+            xgb_word_embeds = [embed_code[word_embeddings] for word_embeddings in xgb_word_embeddings]
+            bnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in bnb_word_embeddings]
+            mnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in mnb_word_embeddings]
+            for model in models:
+                if model == 'XGBoost':
+                    for word_embeddings in xgb_word_embeds:
+                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
+                elif model == 'Binary Naive Bayes':
+                    for word_embeddings in bnb_word_embeds:
+                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
+                elif model == 'Multinomial Naive Bayes':
+                    for word_embeddings in mnb_word_embeds:
+                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
+                else:
+                    streamlit_run(model_code[model], word_embeddings='w2v', load_models=True)
         st.balloons()
     
         # check if new metrics files have been added
@@ -124,5 +184,6 @@ if run_inference:
 if run_training:
     with col2:
         with st.spinner('Training in progress...'):
-            streamlit_run([model_code[model] for model in models], word_embeddings=embed_code[word_embeddings], load_models=False)
-        st.ballons()
+            pass
+            # streamlit_run([model_code[model] for model in models], word_embeddings=embed_code[word_embeddings], load_models=False)
+        st.balloons()
