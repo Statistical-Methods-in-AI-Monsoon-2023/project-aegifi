@@ -66,19 +66,13 @@ with mid_col:
     if 'Multinomial Naive Bayes' in models:
         with st.expander('Select the word embeddings you want to use with Multinomial Naive Bayes:'):
             # add a checkboxes for word embeddings
-            mnb_w2v = st.checkbox('Word 2 Vec', value=True, key='mnb_w2v')
-            mnb_bow = st.checkbox('Bag of Words', key='mnb_bow')
+            mnb_bow = st.checkbox('Bag of Words', key='mnb_bow', value=True)
             mnb_tfidf = st.checkbox('TF-IDF', key='mnb_tfidf')
-            mnb_tf_w2v = st.checkbox('TF-IDF Weighted Word 2 Vec', key='mnb_tf_w2v')
             
-            if mnb_w2v:
-                mnb_word_embeddings.append('Word 2 Vec')
             if mnb_bow:
                 mnb_word_embeddings.append('Bag of Words')
             if mnb_tfidf:
                 mnb_word_embeddings.append('TF-IDF')
-            if mnb_tf_w2v:
-                mnb_word_embeddings.append('TF-IDF Weighted Word 2 Vec')
 
 model_code = {
     "Binary Naive Bayes": "bnb",
@@ -121,6 +115,7 @@ if run_inference:
             bnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in bnb_word_embeddings]
             mnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in mnb_word_embeddings]
             for model in models:
+                # print(model)
                 if model == 'XGBoost':
                     for word_embeddings in xgb_word_embeds:
                         streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)

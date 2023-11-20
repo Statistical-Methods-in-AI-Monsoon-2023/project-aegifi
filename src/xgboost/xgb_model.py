@@ -61,7 +61,7 @@ class XGBModel:
         return y_pred
     
     def write_metrics(self, y_test):
-        file_name = f'xgb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
+        file_name = f'xgb_{self.word_embeddings}_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
 
         file_path = f'./src/xgboost/metrics/{file_name}'
 

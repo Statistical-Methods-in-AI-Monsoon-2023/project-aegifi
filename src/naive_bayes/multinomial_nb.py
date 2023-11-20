@@ -52,26 +52,26 @@ class MultinomialNBRunner:
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        self.word_embeddings = word_embeddings
         if load_models:
             self.load_model()
         else:
-            self.model = OneVsRestClassifier(ComplementNB())
+            self.model = OneVsRestClassifier(MultinomialNB(alpha=0.5))
         self.train_time = 0
         self.predict_time = 0
         self.preds = None
-        self.word_embeddings = word_embeddings
         
     def load_data(self):
         print("loading data...")
-        self.X_train, self.X_test, self.y_train, self.y_test = load_data(word_embeddings='bow')
+        self.X_train, self.X_test, self.y_train, self.y_test = load_data(word_embeddings=self.word_embeddings)
     
     def save_model(self):
         # save using joblib
-        dump(self.model, f'./src/naive_bayes/pretrained/multinomial_nb.joblib')
+        dump(self.model, f'./src/naive_bayes/pretrained/multinomial_nb_{self.word_embeddings}.joblib')
     
     def load_model(self):
         # load using joblib
-        self.model = load(f'./src/naive_bayes/pretrained/best_multinomial_nb.joblib')
+        self.model = load(f'./src/naive_bayes/pretrained/multinomial_nb_{self.word_embeddings}.joblib')
     
     def run_training(self):
         self.load_data()
@@ -86,7 +86,7 @@ class MultinomialNBRunner:
 
     
     def write_metrics(self):
-        file_name = f'multi_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
+        file_name = f'multi_nb_{self.word_embeddings}_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
         file_path = f'./src/naive_bayes/metrics/{file_name}'
         with open(file_path, 'w') as f:
             f.write(f'Predict time: {self.predict_time}\n')
