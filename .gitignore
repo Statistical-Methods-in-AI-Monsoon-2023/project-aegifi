@@ -18,3 +18,4 @@ __pycache__
 !embeddings/.gitkeep
 
 vectorised_data/
+vectorisers/
