@@ -115,7 +115,6 @@ if run_inference:
             bnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in bnb_word_embeddings]
             mnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in mnb_word_embeddings]
             for model in models:
-                # print(model)
                 if model == 'XGBoost':
                     for word_embeddings in xgb_word_embeds:
                         streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
@@ -125,8 +124,8 @@ if run_inference:
                 elif model == 'Multinomial Naive Bayes':
                     for word_embeddings in mnb_word_embeds:
                         streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
-                else:
-                    streamlit_run(model_code[model], word_embeddings='w2v', load_models=True)
+                # else:
+                #     streamlit_run(model_code[model], word_embeddings='w2v', load_models=True)
         st.balloons()
     
         # check if new metrics files have been added

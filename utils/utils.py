@@ -135,7 +135,7 @@ class MetricReader:
         }
         for model_name in self.metrics:
             df_dict['Model'].append(self.model_name[model_name])
-            df_dict[metric_name].append(float(self.metrics[model_name][metric_name]))
+            df_dict['Value'].append(float(self.metrics[model_name][metric_name]))
         # create dataframe from dictionary
         df = pd.DataFrame(df_dict)
         self.dfs[metric_name] = df

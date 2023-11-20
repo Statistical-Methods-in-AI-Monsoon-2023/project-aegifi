@@ -14,15 +14,18 @@ from multinomial_gru import MultinomialGRURunner
 class Model:
     def __init__(self, model='xgb', word_embeddings='w2v', load_models=False):
         models = {
-            'xgb': XGBRunner(word_embeddings=word_embeddings, load_models=load_models),
-            'bnb': BinaryNBRunner(word_embeddings=word_embeddings, load_models=load_models),
-            'mnb': MultinomialNBRunner(word_embeddings=word_embeddings, load_models=load_models),
-            'bgru': BinaryGRURunner(load_models=load_models),
-            'rgru': RankGRURunner(load_models=load_models),
-            'mgru': MultinomialGRURunner(load_models=load_models)
+            'xgb': XGBRunner,
+            'bnb': BinaryNBRunner,
+            'mnb': MultinomialNBRunner,
+            'bgru': BinaryGRURunner,
+            'rgru': RankGRURunner,
+            'mgru': MultinomialGRURunner
         }
         try:
-            self.model = models[model]
+            if model in ['xgb', 'bnb', 'mnb']:
+                self.model = models[model](load_models=load_models, word_embeddings=word_embeddings)
+            else:
+                self.model = models[model](load_models=load_models)
         except KeyError:
             raise Exception('Invalid model name')
 
