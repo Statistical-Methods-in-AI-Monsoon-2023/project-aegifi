@@ -106,8 +106,8 @@ print("Embedding matrix size: ", len(embedding_matrix))
 embedding_matrix = np.array(embedding_matrix)
 print("Embedding matrix shape: ", embedding_matrix.shape)
 
-
-
+# save the embedding matrix
+np.save(f'vectorizers/embedding_matrix_w2v.npy', embedding_matrix)
 
 print("Getting average embeddings...")
 

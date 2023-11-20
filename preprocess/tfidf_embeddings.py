@@ -7,6 +7,7 @@ from time import time
 from tqdm import tqdm
 import multiprocessing
 from nltk.tokenize import word_tokenize
+import pickle
 
 df = pd.read_csv('data/preprocessed_data.csv')
 
@@ -16,6 +17,10 @@ st = time()
 
 vectorizer = CountVectorizer()
 X = vectorizer.fit_transform(X)
+
+# save vectorizer
+with open('vectorizer/bow_vectorizer.pkl', 'wb') as f:
+    pickle.dump(vectorizer, f)
 
 print("Time taken by vectorizer: ", time() - st)
 
