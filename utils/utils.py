@@ -85,28 +85,47 @@ class MetricReader:
         self.metric_types = []
         self.dfs = {}
         self.model_name = {
-            'xgb': 'XGBoost',
+            'xgb_tfidf': 'XGBoost w/ TF-IDF',
+            'xgb_w2v': 'XGBoost w/ Word 2 Vec',
+            'xgb_bow': 'XGBoost w/ Bag of Words',
+            'xgb_tf_w2v': 'XGBoost w/ TF-IDF Weighted Word 2 Vec',
             'bgru': 'Binary GRU',
             'rgru': 'Rank GRU',
             'mgru': 'Multinomial GRU',
-            'bnb': 'Binary Naive Bayes',
-            'mnb': 'Multinomial Naive Bayes'
+            'bnb_tfidf': 'Binary Naive Bayes w/ TF-IDF',
+            'bnb_w2v': 'Binary Naive Bayes w/ Word 2 Vec',
+            'bnb_bow': 'Binary Naive Bayes w/ Bag of Words',
+            'bnb_tf_w2v': 'Binary Naive Bayes w/ TF-IDF Weighted Word 2 Vec',
+            'mnb_tfidf': 'Multinomial Naive Bayes w/ TF-IDF',
+            'mnb_w2v': 'Multinomial Naive Bayes w/ Word 2 Vec',
+            'mnb_bow': 'Multinomial Naive Bayes w/ Bag of Words',
+            'mnb_tf_w2v': 'Multinomial Naive Bayes w/ TF-IDF Weighted Word 2 Vec',
         }
     
     def get_model_name(self, file_path):
         name_path =  file_path.split('/')[-1].split('.')[0]
-        if 'xgb' in name_path:
-            return 'xgb'
-        elif 'binary_gru' in name_path:
-            return 'bgru'
-        elif 'rank_gru' in name_path:
-            return 'rgru'
-        elif 'multinomial_gru' in name_path:
-            return 'mgru'
-        elif 'binary_nb' in name_path:
-            return 'bnb'
-        elif 'multi_nb' in name_path:
-            return 'mnb'
+        model_dict = {
+            'xgb_tfidf': 'xgb_tfidf',
+            'xgb_w2v': 'xgb_w2v',
+            'xgb_bow': 'xgb_bow',
+            'xgb_tf_w2v': 'xgb_tf_w2v',
+            'binary_gru': 'bgru',
+            'rank_gru': 'rgru',
+            'multinomial_gru': 'mgru',
+            'binary_nb_tfidf': 'bnb_tfidf',
+            'binary_nb_w2v': 'bnb_w2v',
+            'binary_nb_bow': 'bnb_bow',
+            'binary_nb_tf_w2v': 'bnb_tf_w2v',
+            'multi_nb_tfidf': 'mnb_tfidf',
+            'multi_nb_w2v': 'mnb_w2v',
+            'multi_nb_bow': 'mnb_bow',
+            'multi_nb_tf_w2v': 'mnb_tf_w2v'
+        }
+        
+        for model_name in model_dict:
+            if model_name in name_path:
+                return model_dict[model_name]
+            
     
     def create_df_for_metric(self, metric_name):
         # create a dataframe for the metric for all models
@@ -116,7 +135,7 @@ class MetricReader:
         }
         for model_name in self.metrics:
             df_dict['Model'].append(self.model_name[model_name])
-            df_dict['Value'].append(float(self.metrics[model_name][metric_name]))
+            df_dict[metric_name].append(float(self.metrics[model_name][metric_name]))
         # create dataframe from dictionary
         df = pd.DataFrame(df_dict)
         self.dfs[metric_name] = df
