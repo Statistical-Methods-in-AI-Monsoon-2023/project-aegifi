@@ -1,3 +1,4 @@
+import pickle
 import argparse
 import sys
 sys.path.append('./src/naive_bayes')
@@ -29,11 +30,81 @@ class Model:
         except KeyError:
             raise Exception('Invalid model name')
 
+class Inferencer:
+    def __init__(self, plot_sample, model, word_embeddings='w2v'):
+        self.sample_X = plot_sample
+        self.model_name = model
+        self.md = Model(model=model, word_embeddings=word_embeddings, load_models=True)
+        
+        self.classes = [
+            'Action',
+            'Adventure',
+            'Animation',
+            'Biography',
+            'Comedy',
+            'Crime',
+            'Drama',
+            'Family',
+            'Fantasy',
+            'History',
+            'Horror',
+            'Music',
+            'Musical',
+            'Mystery',
+            'Romance',
+            'Sci-Fi',
+            'Sport',
+            'Thriller',
+            'War',
+            'Western'
+        ]
+    
+    def tfidf_inference(self):
+        # load vectorizer
+        vectorizer = None
+        with open('vectorizer/tfidf_vectorizer.pkl', 'rb') as f:
+            vectorizer = pickle.load(f)
+        
+        # fit vectorizer on sample
+        sample_X = vectorizer.transform([self.sample_X])
+        
+        # run inference
+        output = self.md.model.model.predict(sample_X)
+        
+        # output classes where index of output is 1
+        output_classes = []
+        for i in range(len(output)):
+            if output[i] == 1:
+                output_classes.append(self.classes[i])
+        
+        return output_classes
+
+    def bow_inference(self):
+        # load vectorizer
+        vectorizer = None
+        with open('vectorizer/bow_vectorizer.pkl', 'rb') as f:
+            vectorizer = pickle.load(f)
+        
+        # fit vectorizer on sample
+        sample_X = vectorizer.transform([self.sample_X])
+        
+        # run inference
+        output = self.md.model.model.predict(sample_X)
+        
+        # output classes where index of output is 1
+        output_classes = []
+        for i in range(len(output)):
+            if output[i] == 1:
+                output_classes.append(self.classes[i])
+        
+        return output_classes
+
 def streamlit_run(model, word_embeddings='w2v', load_models=True, plot_sample=None):
     
     if plot_sample:
         # run inference on a single movie plot
-        pass
+        inf = Inferencer(plot_sample=plot_sample, model=model, word_embeddings=word_embeddings)
+        return inf.bow_inference()
     
     md = Model(model=model, word_embeddings=word_embeddings, load_models=load_models)
     if load_models:
