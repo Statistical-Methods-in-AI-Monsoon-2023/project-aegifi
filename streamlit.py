@@ -91,15 +91,19 @@ embed_code = {
 }
 
 
-with col2:
+with col1:
     inner_col1, inner_col2 = st.columns((1,1))
     with inner_col1:
         run_training = st.button('Run Training', disabled = len(models) == 0)
     with inner_col2:
         run_inference = st.button('Run Inference', disabled = len(models) == 0)
 
-# enable the button only if at least one model is selected
+with col2:
+    # text box to enter sample plot
+    sample_plot = st.text_area('Enter a sample plot to run inference on:', height=50)
+    st.button('Run Inference on Sample Plot', key='sample_plot', disabled = len(sample_plot) == 0)
 
+# enable the button only if at least one model is selected
 if run_inference:
     # read all the file names in the metrics folder of all subfolders in src folder
     metrics_files = []
@@ -109,21 +113,25 @@ if run_inference:
                 metrics_files.append(os.path.join(root, file))
     
     
-    with col2:
+    with col1:
         with st.spinner('Inference in progress...'):
             xgb_word_embeds = [embed_code[word_embeddings] for word_embeddings in xgb_word_embeddings]
             bnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in bnb_word_embeddings]
             mnb_word_embeds = [embed_code[word_embeddings] for word_embeddings in mnb_word_embeddings]
+            
+            if len(sample_plot) == 0:
+                sample_plot = None
+            
             for model in models:
                 if model == 'XGBoost':
                     for word_embeddings in xgb_word_embeds:
-                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
+                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True, plot_sample=sample_plot)
                 elif model == 'Binary Naive Bayes':
                     for word_embeddings in bnb_word_embeds:
-                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
+                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True, plot_sample=sample_plot)
                 elif model == 'Multinomial Naive Bayes':
                     for word_embeddings in mnb_word_embeds:
-                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True)
+                        streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True, plot_sample=sample_plot)
                 # else:
                 #     streamlit_run(model_code[model], word_embeddings='w2v', load_models=True)
         st.balloons()
