@@ -19,7 +19,7 @@ vectorizer = CountVectorizer()
 X = vectorizer.fit_transform(X)
 
 # save vectorizer
-with open('vectorizers/bow_vectorizer.pkl', 'wb') as f:
+with open('vectorizers/tfidf_vectorizer.pkl', 'wb') as f:
     pickle.dump(vectorizer, f)
 
 print("Time taken by vectorizer: ", time() - st)

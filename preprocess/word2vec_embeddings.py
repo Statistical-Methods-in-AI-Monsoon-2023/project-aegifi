@@ -75,7 +75,11 @@ vocab, word2idx, idx2word = create_vocab(X_tokens)
 print("Time taken by vocab creation: ", time() - st)
 
 
-
+# save word2idx and idx2word
+with open('vectorizers/word2idx.json', 'w') as f:
+    json.dump(word2idx, f, indent=4)
+    
+exit()
 
 print("Creating Embedding Matrix...")
 

@@ -19,7 +19,7 @@ def load_w2v():
     return X_train, X_test, y_train, y_test
 
 def load_tf_w2v():
-    X = np.load('vectorised_data/X_tfidf_w2v.npy')
+    X = np.load('vectorised_data/X_tf_w2v.npy')
     y = np.load('vectorised_data/y.npy')
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
@@ -58,13 +58,24 @@ def load_tfidf():
     
     return X_train, X_test, y_train, y_test
 
+def load_d2v():
+    X = np.load('vectorised_data/X_doc2vec.npy')
+    y = np.load('vectorised_data/y.npy')
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    
+    print('Loaded data')
+    
+    return X_train, X_test, y_train, y_test
+
 def load_data(word_embeddings='tfidf'):
     loaders = {
         'gru': load_gru,
         'w2v': load_w2v,
         'bow': load_bow,
         'tf_w2v': load_tf_w2v,
-        'tfidf': load_tfidf
+        'tfidf': load_tfidf,
+        'd2v': load_d2v
     }
 
     return loaders[word_embeddings]()
@@ -89,6 +100,7 @@ class MetricReader:
             'xgb_w2v': 'XGBoost w/ Word 2 Vec',
             'xgb_bow': 'XGBoost w/ Bag of Words',
             'xgb_tf_w2v': 'XGBoost w/ TF-IDF Weighted Word 2 Vec',
+            'xgb_d2v': 'XGBoost w/ Doc 2 Vec',
             'bgru': 'Binary GRU',
             'rgru': 'Rank GRU',
             'mgru': 'Multinomial GRU',
@@ -96,6 +108,7 @@ class MetricReader:
             'bnb_w2v': 'Binary Naive Bayes w/ Word 2 Vec',
             'bnb_bow': 'Binary Naive Bayes w/ Bag of Words',
             'bnb_tf_w2v': 'Binary Naive Bayes w/ TF-IDF Weighted Word 2 Vec',
+            'bnb_d2v': 'Binary Naive Bayes w/ Doc 2 Vec',
             'mnb_tfidf': 'Multinomial Naive Bayes w/ TF-IDF',
             'mnb_w2v': 'Multinomial Naive Bayes w/ Word 2 Vec',
             'mnb_bow': 'Multinomial Naive Bayes w/ Bag of Words',
@@ -119,7 +132,9 @@ class MetricReader:
             'multi_nb_tfidf': 'mnb_tfidf',
             'multi_nb_w2v': 'mnb_w2v',
             'multi_nb_bow': 'mnb_bow',
-            'multi_nb_tf_w2v': 'mnb_tf_w2v'
+            'multi_nb_tf_w2v': 'mnb_tf_w2v',
+            'binary_nb_d2v': 'bnb_d2v',
+            'xgb_d2v': 'xgb_d2v'
         }
         
         for model_name in model_dict:

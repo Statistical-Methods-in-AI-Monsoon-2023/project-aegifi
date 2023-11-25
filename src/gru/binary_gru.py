@@ -50,14 +50,14 @@ class BinaryGRU:
         gpus = tf.config.list_physical_devices('GPU')
         if gpus:
             try:
-                tf.config.set_visible_devices(gpus[2], 'GPU')
+                tf.config.set_visible_devices(gpus[1], 'GPU')
                 logical_gpus = tf.config.list_logical_devices('GPU')
                 print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
             except RuntimeError as e:
                 print(e)
         
         if load_models:
-            self.model_name = 'good_binary_gru.keras'
+            self.model_name = 'binary_gru_5.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
         else:
@@ -66,7 +66,7 @@ class BinaryGRU:
             model.add(SpatialDropout1D(self.params['dropout']))
             for i in range(self.params['layers']):
                 model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout'], dropout=self.params['dropout']))
-                model.add(Dropout(self.params['dropout']))
+                # model.add(Dropout(self.params['dropout']))
                 model.add(LayerNormalization())
             # model.add(Dropout(self.params['dropout']))
             model.add(Dense(20, activation='sigmoid'))
@@ -80,7 +80,8 @@ class BinaryGRU:
         st = time.time()
         print("Fitting model...")
         
-        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=2, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_delta=0.0001)])
+        # self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=2, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, min_delta=0.0001)])
+        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver])
         
         self.train_time = time.time() - st
         print("Done fitting model")
@@ -126,6 +127,7 @@ class BinaryGRURunner:
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        self.init_model()
     
     def load_data(self):
         self.X_train, self.X_test, self.y_train, self.y_test = ld(word_embeddings='gru')
@@ -135,14 +137,12 @@ class BinaryGRURunner:
     
     def run_training(self):
         self.load_data()
-        self.init_model()
         
         self.model.fit(self.X_train, self.y_train)
         self.model.save_model()
     
     def run_inference(self):
         self.load_data()
-        self.init_model()
         
         self.model.predict(self.X_test)
         self.model.write_metrics(self.y_test)

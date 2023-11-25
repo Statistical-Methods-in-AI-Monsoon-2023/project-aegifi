@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 import numpy as np
 import multiprocessing
+from tqdm import tqdm
 
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -14,7 +15,7 @@ data_file = 'data/preprocessed_data.csv'
 data = pd.read_csv(data_file, index_col=0)
 
 X = data['plot'].values
-X = X[:100]
+# X = X[:100]
 
 def read_corpus(X, tokens_only=False):
     for i, line in enumerate(X):
@@ -34,9 +35,13 @@ print(f"Word 'life' appeared {model.wv.get_vecattr('life', 'count')} times in th
 
 model.train(train_corpus, total_examples=model.corpus_count, epochs=model.epochs)
 
+model.save('vectorizers/doc2vec.model')
+
 embeddings = []
 
-for i in X_tokens:
+for i in tqdm(X_tokens):
     embeddings.append(model.infer_vector(i))
 embeddings = np.array(embeddings)
 print(embeddings.shape)
+
+np.save('vectorised_data/X_doc2vec.npy', embeddings)

@@ -12,7 +12,7 @@ import pickle
 df = pd.read_csv('data/preprocessed_data.csv')
 
 X = df['plot']
-y = np.load('vectorised_data/y.npy')
+# y = np.load('vectorised_data/y.npy')
 
 st = time()
 
@@ -29,4 +29,4 @@ print(X.shape)
 
 # # save as numpy arrays
 scipy.sparse.save_npz('vectorised_data/X_bow.npz', X)
-np.save('vectorised_data/y.npy', y)
+# np.save('vectorised_data/y.npy', y)

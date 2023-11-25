@@ -6,7 +6,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import re
 from nltk.corpus import stopwords
-
+import pickle
 
 REPLACE_BY_SPACE_RE = re.compile('[/(){}\[\]\|@,;]')
 BAD_SYMBOLS_RE = re.compile('[^0-9a-z #+_]')
@@ -49,6 +49,11 @@ def tokenize(df):
 
     X = tokenizer.texts_to_sequences(df['plot'].values)
     X = pad_sequences(X, maxlen=MAX_SEQUENCE_LENGTH)
+    
+    # save the tokenizer
+    with open('./vectorizers/gru_tokenizer.pickle', 'wb') as handle:
+        pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
     print('Shape of data tensor:', X.shape)
     return X
 
@@ -59,7 +64,7 @@ def preprocess():
     df = read_data()
     df = apply_cleaning(df)
     X = tokenize(df)
-    save(X)
+    # save(X)
 
 if __name__ == '__main__':
     preprocess()

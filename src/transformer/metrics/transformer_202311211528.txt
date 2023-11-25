@@ -1,0 +1,33 @@
+Loaded from transformer_9.keras
+params: {'units': 128, 'dropout': 0.1, 'batch_size': 128, 'epochs': 10, 'lr': 0.001}
+Model: "Transformer"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ token_and_position_embeddi  (None, 250, 100)          6025000   
+ ng (TokenAndPositionEmbedd                                      
+ ing)                                                            
+                                                                 
+ transformer_block (Transfo  (None, 250, 100)          696856    
+ rmerBlock)                                                      
+                                                                 
+ global_average_pooling1d (  (None, 100)               0         
+ GlobalAveragePooling1D)                                         
+                                                                 
+ dropout_2 (Dropout)         (None, 100)               0         
+                                                                 
+ dense_2 (Dense)             (None, 20)                2020      
+                                                                 
+=================================================================
+Total params: 6723876 (25.65 MB)
+Trainable params: 6723876 (25.65 MB)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________
+Predict time: 19.366034746170044
+Accuracy: 0.6331676683618431
+Hamming Score: 0.9653914316535676
+Jaccard Score: 0.6656306415290987
+Hit Rate: 0.8878486669748805
+F1 Score: 0.8786451485365032
+Precision Score: 0.8559451113239255
+Recall Score: 0.7990170407429423

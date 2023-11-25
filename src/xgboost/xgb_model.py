@@ -89,6 +89,7 @@ class XGBRunner:
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        self.init_model()
     
     def load_data(self):
         self.X_train, self.X_test, self.y_train, self.y_test = load_data(word_embeddings=self.word_embeddings)
@@ -98,14 +99,12 @@ class XGBRunner:
 
     def run_training(self):
         self.load_data()
-        self.init_model()
         
         self.model.fit(self.X_train, self.y_train)
         self.model.save_model()
     
     def run_inference(self):
         self.load_data()
-        self.init_model()
         
         self.model.predict(self.X_test)
         self.model.write_metrics(self.y_test)

@@ -52,7 +52,7 @@ class RankGRU:
         gpus = tf.config.list_physical_devices('GPU')
         if gpus:
             try:
-                tf.config.set_visible_devices(gpus[1], 'GPU')
+                tf.config.set_visible_devices(gpus[2], 'GPU')
                 logical_gpus = tf.config.list_logical_devices('GPU')
                 print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
             except RuntimeError as e:
@@ -61,7 +61,7 @@ class RankGRU:
         
         self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'rank_gru_0.keras'
+            self.model_name = 'rank_gru_7.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
             self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_rank.json')
@@ -71,7 +71,7 @@ class RankGRU:
             model.add(SpatialDropout1D(self.params['dropout']))
             for i in range(self.params['layers']):
                 model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout'], dropout=self.params['dropout']))
-                model.add(Dropout(self.params['dropout']))
+                # model.add(Dropout(self.params['dropout']))
                 model.add(LayerNormalization())
             model.add(Dense(20, activation='sigmoid'))
             optimizer = tf.keras.optimizers.Adam(learning_rate=self.params['lr'])
@@ -93,7 +93,7 @@ class RankGRU:
         st = time.time()
         print("Fitting GRU...")
         
-        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver, EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001), ReduceLROnPlateau(monitor='val_loss', factor=0.4, patience=1, min_delta=0.0001)])
+        self.model.fit(X, y, epochs=self.epochs, batch_size=self.batch_size, validation_split=0.1, callbacks=[saver])
         
         print("Done fitting GRU")
         
@@ -152,6 +152,7 @@ class RankGRURunner:
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        self.init_model()
     
     def load_data(self):
         self.X_train, self.X_test, self.y_train, self.y_test = ld(word_embeddings='gru')
@@ -162,14 +163,12 @@ class RankGRURunner:
     
     def run_training(self):
         self.load_data()
-        self.init_model()
         
         self.model.fit(self.X_train, self.y_train)
         self.model.save_model()
     
     def run_inference(self):
         self.load_data()
-        self.init_model()
         
         self.model.predict(self.X_test)
         self.model.write_metrics(self.y_test)
