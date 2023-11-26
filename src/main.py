@@ -9,6 +9,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import re
 from nltk.corpus import stopwords
+from lime.lime_text import LimeTextExplainer
 
 
 REPLACE_BY_SPACE_RE = re.compile('[/(){}\[\]\|@,;]')
@@ -83,6 +84,12 @@ class Inferencer:
             'Western'
         ]
     
+    def lime_explain(self, sample_X, is_bow=False):
+        explainer = LimeTextExplainer(class_names=self.classes, bow=is_bow)
+        explanation = explainer.explain_instance(sample_X[0], self.md.model.model.predict_proba, num_features=6)
+        # save html
+        explanation.save_to_file('lime.html')
+    
     def vectorizer_inf(self, vectorizer_path):
         #load vectorizer
         vectorizer = None
@@ -94,6 +101,9 @@ class Inferencer:
 
         # Run inference
         output = self.md.model.model.predict(sample_X)[0]
+        
+        # run lime
+        self.lime_explain(self.sample_X, is_bow=True)
 
         # Output classes where the index of output is 1
         output_classes = [self.classes[i] for i in range(len(output)) if output[i] == 1]
