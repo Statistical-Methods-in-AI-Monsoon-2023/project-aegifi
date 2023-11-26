@@ -10,7 +10,7 @@ from keras.preprocessing.sequence import pad_sequences
 import re
 from nltk.corpus import stopwords
 from lime.lime_text import LimeTextExplainer
-
+from sklearn.pipeline import Pipeline
 
 REPLACE_BY_SPACE_RE = re.compile('[/(){}\[\]\|@,;]')
 BAD_SYMBOLS_RE = re.compile('[^0-9a-z #+_]')
@@ -56,9 +56,13 @@ class Model:
             raise Exception('Invalid model name')
 
 class Inferencer:
-    def __init__(self, plot_sample, model, word_embeddings='w2v'):
+    def __init__(self, plot_sample, model, word_embeddings='w2v', genre=None):
         self.sample_X = [plot_sample]
         self.model_name = model
+        self.embed_type = word_embeddings
+        if genre:
+            self.genre = genre
+            
         self.md = Model(model=model, word_embeddings=word_embeddings, load_models=True)
         
         self.classes = [
@@ -84,11 +88,120 @@ class Inferencer:
             'Western'
         ]
     
-    def lime_explain(self, sample_X, is_bow=False):
+    def vector_pipeline(self, vectorizer_path):
+        # create a pipeline with vectorizer and model
+        vectorizer = None
+        with open(vectorizer_path, 'rb') as f:
+            vectorizer = pickle.load(f)
+
+        pipeline = Pipeline([
+            ('vectorizer', vectorizer),
+            ('model', self.md.model.model)
+        ])
+        
+        return pipeline
+    
+    class word2vec_pipeline:
+        def __init__(self, model, embedding_matrix, vectorizer_path=None, word2idx_path='./vectorizers/word2idx.json'):
+            self.model = model
+            self.embedding_matrix = embedding_matrix
+            # load word2idx
+            self.word2idx = None
+            with open(word2idx_path, 'rb') as f:
+                self.word2idx = json.load(f)
+            
+            # load vectorizer if needed
+            self.vectorizer = None
+            if vectorizer_path:
+                with open(vectorizer_path, 'rb') as f:
+                    self.vectorizer = pickle.load(f)
+        
+        def get_avg_embeddings(self, data):
+            average_embeddings = []
+            for plot in data:
+                plot_embeddings = []
+                for word in plot:
+                    if word in self.word2idx:
+                        plot_embeddings.append(self.embedding_matrix[self.word2idx[word]])
+                    else:
+                        plot_embeddings.append(self.embedding_matrix[self.word2idx['<UNK>']])
+                plot_embeddings = np.array(plot_embeddings)
+                
+                average_embeddings.append(np.mean(plot_embeddings, axis=0))
+                
+            average_embeddings = np.array(average_embeddings)
+            
+            return average_embeddings
+        
+        def get_weighted_embeddings(self, data, tfidf, tfidf_features):
+            average_embeddings = []
+            for index, plot in enumerate(data):
+                plot_embeddings = []
+                weight_sum = 0
+                feature_index = tfidf[index,:].nonzero()[1]
+                tfidf_words = tfidf_features[feature_index]
+                tfidf_scores = [tfidf[index, x] for x in feature_index]
+                for word in plot:
+                    weight = 0
+                    for feature, score in zip(tfidf_words, tfidf_scores):
+                        if feature == word:
+                            weight = score
+                            break
+                    if weight == 0:
+                        print(f'Word {word} not found in tfidf features')
+                    if word in self.word2idx:
+                        plot_embeddings.append(self.embedding_matrix[self.word2idx[word]] * weight)
+                    else:
+                        plot_embeddings.append(self.embedding_matrix[self.word2idx['<UNK>']] * weight)
+                    weight_sum += weight
+                plot_embeddings = np.array(plot_embeddings)
+                
+                average_embeddings.append(np.mean(plot_embeddings, axis=0) / weight_sum)
+                
+            average_embeddings = np.array(average_embeddings)
+            
+            return average_embeddings
+            
+        def predict_proba(self, X):
+            if self.vectorizer:
+                # vectorize sample
+                transformed = self.vectorizer.transform(X)
+                
+                # get weighted embeddings
+                embeds = self.get_weighted_embeddings(X, transformed, self.vectorizer.get_feature_names_out())
+                
+            else:
+                # get average embeddings
+                embeds = self.get_avg_embeddings(X)
+                
+            output = self.model.predict_proba(embeds)
+            
+            return output
+        
+    
+    def lime_explain(self, pipeline, genre, sample_X, is_bow=False):
+        # get index of genre 
+        genre_index = self.classes.index(genre)
+        
         explainer = LimeTextExplainer(class_names=self.classes, bow=is_bow)
-        explanation = explainer.explain_instance(sample_X[0], self.md.model.model.predict_proba, num_features=6)
-        # save html
-        explanation.save_to_file('lime.html')
+        explanation = explainer.explain_instance(sample_X[0], pipeline.predict_proba, num_features=10, labels=(genre_index,))
+        
+        return explanation.as_list(label=genre_index)
+    
+    def run_lime(self):
+        if self.embed_type == 'w2v':
+            model = self.md.model.model
+            embedding_matrix = np.load(f'vectorised_data/X_{self.embed_type}.npy')
+            pipeline = self.word2vec_pipeline(model, embedding_matrix)
+            return self.lime_explain(pipeline, self.genre, self.sample_X)
+        elif self.embed_type == 'tf_w2v':
+            model = self.md.model.model
+            embedding_matrix = np.load(f'vectorised_data/X_{self.embed_type}.npy')
+            pipeline = self.word2vec_pipeline(model, embedding_matrix, vectorizer_path=f'vectorizers/tfidf_vectorizer.pkl')
+            return self.lime_explain(pipeline, self.genre, self.sample_X)
+        elif self.embed_type == 'tfidf' or self.embed_type == 'bow':
+            pipeline = self.vector_pipeline(f'vectorizers/{self.embed_type}_vectorizer.pkl')
+            return self.lime_explain(pipeline, self.genre, self.sample_X, is_bow=True)
     
     def vectorizer_inf(self, vectorizer_path):
         #load vectorizer
@@ -101,9 +214,6 @@ class Inferencer:
 
         # Run inference
         output = self.md.model.model.predict(sample_X)[0]
-        
-        # run lime
-        self.lime_explain(self.sample_X, is_bow=True)
 
         # Output classes where the index of output is 1
         output_classes = [self.classes[i] for i in range(len(output)) if output[i] == 1]
@@ -262,7 +372,17 @@ class Inferencer:
         else:
             raise ValueError("Invalid vectorizer_type. Supported types are 'tfidf' and 'bow'.")
 
-def streamlit_run(model, word_embeddings='w2v', load_models=True, plot_sample=None):
+def lime_run(model, word_embeddings='w2v', load_models=True, plot_sample=None, genre=None):
+    
+    if 'gru' in model:
+        inf = Inferencer(plot_sample=plot_sample, model=model)
+        return inf.gru_inference()
+    
+    inf = Inferencer(plot_sample=plot_sample, model=model, word_embeddings=word_embeddings, genre=genre)
+    return inf.run_lime()
+    
+
+def streamlit_run(model, word_embeddings='w2v', load_models=True, plot_sample=None,):
     
     if plot_sample:
         # run inference on a single movie plot

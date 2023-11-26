@@ -2,12 +2,22 @@ import streamlit as st
 import sys
 import os
 from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib
+import plotly.express as px
+import pandas as pd
 
 sys.path.append('./src/')
 sys.path.append('./utils/')
 
-from main import streamlit_run
+from main import streamlit_run, lime_run
 from utils import MetricReader
+
+if 'outputs' not in st.session_state:
+    st.session_state.outputs = []
+
+if 'sample_plot' not in st.session_state:
+    st.session_state.sample_plot = ""
 
 adyansh = Image.open('./assets/adyansh.png')
 akshit = Image.open('./assets/akshit.png')
@@ -30,7 +40,7 @@ with header_col_3:
     
 st.markdown('---')
 
-col1,mid_col, col2 = st.columns((1,1,1))
+col1, col2 = st.columns((1,2))
 
 with col1:
     st.markdown('### Model Selection')
@@ -39,7 +49,7 @@ with col1:
         ['Binary Naive Bayes', 'Multinomial Naive Bayes', 'XGBoost', 'Binary GRU', 'Rank GRU', 'Multinomial GRU'],
     )
 
-with mid_col:
+with col1:
     st.markdown('### Word Embeddings Selection')
     xgb_word_embeddings = []
     bnb_word_embeddings = []
@@ -156,7 +166,7 @@ rev_embed_code = {
 
 with col1:
     
-    st.markdown('#### Run on IMDB Dataset')
+    st.markdown('#### Run on IMDB Dataset for benchmarking results')
     
     inner_col1, inner_col2 = st.columns((1,1))
     with inner_col1:
@@ -167,8 +177,8 @@ with col1:
 with col2:
     st.markdown('### Create your own summary!')
     # text box to enter sample plot
-    sample_plot = st.text_area('Enter a sample plot to run inference on:', height=50)
-    run_inference = st.button('Run Inference on Sample Plot', key='sample_plot', disabled = len(sample_plot) == 0)
+    st.session_state.sample_plot = st.text_area('Enter a sample plot to run inference on:', height=150)
+    run_inference = st.button('Run Inference on Sample Plot', key='st.session_state.sample_plot', disabled = len(st.session_state.sample_plot) == 0)
 
 # enable the button only if at least one model is selected
 if run_inference or run_inference_test:
@@ -192,49 +202,35 @@ if run_inference or run_inference_test:
                 'Multinomial Naive Bayes': mnb_word_embeds
             }
             
-            outputs = []
-            if len(sample_plot) == 0:
-                sample_plot = None
+            if len(st.session_state.sample_plot) == 0:
+                st.session_state.sample_plot = None
+            else:
+                # reset the outputs
+                st.session_state.outputs = []
             
             for model in models:
                 if model in ['Binary GRU', 'Rank GRU', 'Multinomial GRU']:
-                    out = streamlit_run(model_code[model], word_embeddings=None, load_models=True, plot_sample=sample_plot)
+                    out = streamlit_run(model_code[model], word_embeddings=None, load_models=True, plot_sample=st.session_state.sample_plot)
                     
-                    outputs.append({
-                        'model': model,
-                        'word_embeddings': None,
-                        'output': out
-                    })
+                    if st.session_state.sample_plot:
+                        st.session_state.outputs.append({
+                            'model': model,
+                            'word_embeddings': None,
+                            'output': out
+                        })
                     continue
                     
                 for word_embeddings in model_to_embed[model]:
-                    out = streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True, plot_sample=sample_plot)
+                    out = streamlit_run(model_code[model], word_embeddings=word_embeddings, load_models=True, plot_sample=st.session_state.sample_plot)
                     
-                    outputs.append({
-                        'model': model,
-                        'word_embeddings': word_embeddings,
-                        'output': out
-                    })
+                    if st.session_state.sample_plot:
+                        st.session_state.outputs.append({
+                            'model': model,
+                            'word_embeddings': word_embeddings,
+                            'output': out
+                        })
                     
-        st.balloons()
-    
-    if run_inference:
-        with col2:
-            if len(outputs) > 0:
-                st.markdown('### Inference Results')
-                st.markdown('---')
-                
-                for output in outputs:
-                    header = ''
-                    if output['word_embeddings'] is None:
-                        header = f'##### {output["model"]}'
-                    else:
-                        header = f'{output["model"]} with {rev_embed_code[output["word_embeddings"]]}'
-                    with st.expander(header, expanded=True):
-                        st.markdown(f'##### Predicted Genres:')
-                        for genre in output['output']:
-                            st.markdown(f'- {genre}')
-                        
+        st.balloons()               
     
         # check if new metrics files have been added
     new_metrics_files = []
@@ -281,7 +277,151 @@ if run_inference or run_inference_test:
             with cols_2[dfs_2[metric]['col_idx']]:
                 st.markdown(f'### {metric}')
                 st.bar_chart(dfs_2[metric]['df'], x='Model', y='Value')
+
+def map_to_colormap_hex(word_tuples, colormap='viridis'):
+    """
+    Map a value in the range [-1, 1] to a hexadecimal color in a specified colormap.
+
+    Parameters:
+    - value (float): The value to be mapped to a color.
+    - colormap (str): The name of the colormap to use (default is 'viridis').
+
+    Returns:
+    - hex_color (str): Hexadecimal representation of the color.
+    """
+    # get the max and min values
+    max_value = max(word_tuples, key=lambda x: x[1])[1]
+    min_value = min(word_tuples, key=lambda x: x[1])[1]
+    
+    # save word-value pairs in a dict
+    word_dict = {}
+    for word, value in word_tuples:
+        word_dict[word] = value
+    
+    # do min-max normalization
+    word_tuples = [(word, (value - min_value) / (max_value - min_value)) for word, value in word_tuples]
+
+    # map the values to 0 - 1 range
+    word_tuples = [(word, (value + 1) / 2) for word, value in word_tuples]
+    
+    # map to the colormap
+    word_tuples = [(word, plt.get_cmap(colormap)(value)) for word, value in word_tuples]
+    
+    # convert to hex
+    hex_values = {}
+    for word, value in word_tuples:
+        hex_values[word] = {
+            'importance': word_dict[word],
+            'color': matplotlib.colors.rgb2hex(value)
+        }
+    
+    return hex_values
+
             
+def run_lime(model, word_embeddings, genre):
+    with col2:
+        st.write(f'### LIME Explanation for {genre} prediction by {model} with {rev_embed_code[word_embeddings]}')
+        st.write('---')
+        
+        with st.spinner('LIME explanation in progress...'):
+            out = lime_run(model_code[model], word_embeddings=word_embeddings, genre=genre, plot_sample=st.session_state.sample_plot)
+        
+        # out is list of tuples of (word, importance) pairs
+        
+        # color the words based on their importance and display the entire sample plot with the words colored
+        word_color_dict = map_to_colormap_hex(out)
+        
+        # color the words in the sample plot
+        display_sample_plot = st.session_state.sample_plot.replace('\n', ' ')
+        # add spaces around punctuation
+        display_sample_plot = display_sample_plot.replace('.', ' . ')
+        display_sample_plot = display_sample_plot.replace(',', ' , ')
+        display_sample_plot = display_sample_plot.replace('?', ' ? ')
+        display_sample_plot = display_sample_plot.replace('!', ' ! ')
+        display_sample_plot = display_sample_plot.replace('"', ' " ')
+        display_sample_plot = display_sample_plot.replace("'", " ' ")
+        
+        print(word_color_dict)
+        
+        display_words = display_sample_plot.split(' ')
+        for i in range(len(display_words)):
+            if display_words[i] in word_color_dict:
+                display_words[i] = f'<span style="color: {word_color_dict[display_words[i]]["color"]}">{display_words[i]}</span>'
+        
+        display_sample_plot = ' '.join(display_words)
+        # remove spaces around punctuation
+        display_sample_plot = display_sample_plot.replace(' . ', '. ')
+        display_sample_plot = display_sample_plot.replace(' , ', ', ')
+        display_sample_plot = display_sample_plot.replace(' ? ', '? ')
+        display_sample_plot = display_sample_plot.replace(' ! ', '! ')
+        display_sample_plot = display_sample_plot.replace(' " ', '" ')
+        display_sample_plot = display_sample_plot.replace(" ' ", "' ")
+        
+        col2_inners = st.columns((3,5))
+        
+        
+        with col2_inners[0]:
+            st.markdown(display_sample_plot, unsafe_allow_html=True)
+        
+        # word_color_dict is a dict of dicts with keys as words and values as dicts with keys as importance and color
+        # convert it to a dataframe with the columns as word, importance and color
+        df = pd.DataFrame.from_dict(word_color_dict, orient='index')
+        df = df.reset_index()
+        df = df.rename(columns={'index': 'word'})
+        df = df[['word', 'importance', 'color']]
+        
+        # convert word_color_dict to a dict with word as key and color as value
+        word_color_dict = {word: word_color_dict[word]['color'] for word in word_color_dict}
+        
+        fig = px.bar(df, x='importance', y='word', color='word',
+             labels={'importance': 'Importance', 'word': 'Word'},
+             title='Importance',
+             color_discrete_map=word_color_dict,
+             orientation='h')  # 'h' for horizontal bars
+        
+        with col2_inners[1]:
+            st.plotly_chart(fig)
+        st.write('---')
+        
+
+if st.session_state.outputs is not None:
+    with col2:
+        if len(st.session_state.outputs) > 0:
+            st.markdown('### Inference Results')
+            st.markdown('---')
+            st.markdown('Click on the genres to see the LIME explanations for the predictions made by the models for that genre')
+            
+            # divide outputs into lists of 3
+            outputs_1 = []
+            outputs_2 = []
+            outputs_3 = []
+            
+            # assign each output to a list modulo 3
+            count = 0
+            for output in st.session_state.outputs:
+                if count % 3 == 0:
+                    outputs_1.append(output)
+                elif count % 3 == 1:
+                    outputs_2.append(output)
+                else:
+                    outputs_3.append(output)
+                count += 1
+            
+            # display the outputs in 3 columns
+            cols_1 = st.columns(3)
+            for i, output_list in enumerate([outputs_1, outputs_2, outputs_3]):
+                for output in output_list:
+                    header = ''
+                    if output['word_embeddings'] is None:
+                        output['word_embeddings'] = ''
+                        header = f'#### {output["model"]}'
+                    else:
+                        header = f'#### {output["model"]} with {rev_embed_code[output["word_embeddings"]]}'
+                    with cols_1[i]:
+                        with st.expander(header,expanded=True):
+                            # create a button with the output as the label
+                            for output_label in output['output']:
+                                bt = st.button(output_label, key=f"{output_label}_{output['model']}_{output['word_embeddings']}", on_click=run_lime, args=[output['model'], output['word_embeddings'], output_label]) 
 
 if run_training:
     with col2:
