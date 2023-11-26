@@ -60,6 +60,11 @@ class XGBModel:
         print(f"Predict time: {self.predict_time}")
         return y_pred
     
+    def predict_proba(self, X):
+        print("Predicting probabilities...")
+        y_prob = self.clf.predict_proba(X)
+        return y_prob
+    
     def write_metrics(self, y_test):
         file_name = f'xgb_{self.word_embeddings}_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
 

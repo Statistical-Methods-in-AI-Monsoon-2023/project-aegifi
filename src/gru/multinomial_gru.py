@@ -134,6 +134,12 @@ class MultinomialGRU:
         print(f"Predict time: {self.predict_time}")
         return self.preds
     
+    def predict_proba(self, X):
+        print("Predicting...")
+        
+        preds = self.model.predict(X)
+        return preds
+    
     def write_metrics(self, y_test):
         file_name = f'multinomial_gru_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
 

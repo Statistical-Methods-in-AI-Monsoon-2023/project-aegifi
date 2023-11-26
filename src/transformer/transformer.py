@@ -152,6 +152,16 @@ class Transformer:
         print(f"Predict time: {self.predict_time}")
         return self.preds
     
+    def predict_proba(self, X):
+        st = time.time()
+        print("Predicting...")
+        
+        self.preds = self.model.predict(X)
+        
+        self.predict_time = time.time() - st
+        print(f"Predict time: {self.predict_time}")
+        return self.preds
+    
     def write_metrics(self, y_test):
         file_name = f'transformer_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
 

@@ -86,21 +86,45 @@ class Inferencer:
             'Thriller',
             'War',
             'Western'
-        ]
-    
-    def vector_pipeline(self, vectorizer_path):
-        # create a pipeline with vectorizer and model
-        vectorizer = None
-        with open(vectorizer_path, 'rb') as f:
-            vectorizer = pickle.load(f)
+        ]    
 
-        pipeline = Pipeline([
-            ('vectorizer', vectorizer),
-            ('model', self.md.model.model)
-        ])
+    class vector_pipeline:
+        def init(self, model, vectorizer_path):
+            # create a pipeline with vectorizer and model
+            self.model = model
+            vectorizer = None
+            with open(vectorizer_path, 'rb') as f:
+                self.vectorizer = pickle.load(f)
         
-        return pipeline
-    
+        def clean_text(self, text):
+            """
+                text: a string
+                
+                return: modified initial string
+            """
+            text = text.lower() # lowercase text
+            text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
+            text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
+            text = re.sub(r'\W+', '', text)
+            text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
+            return text
+        
+        def preprocess(self, X):
+            cleaned_X = []
+            for plot in X:
+                cleaned_X.append(self.clean_text(plot))
+            return cleaned_X
+
+        def predict_proba(self, X):
+            X = self.preprocess(X)
+            
+            # vectorize sample
+            transformed = self.vectorizer.transform(X)
+            
+            # run inference
+            output = self.model.predict_proba(transformed)
+            return output
+        
     class word2vec_pipeline:
         def __init__(self, model, embedding_matrix, vectorizer_path=None, word2idx_path='./vectorizers/word2idx.json'):
             self.model = model
@@ -115,6 +139,25 @@ class Inferencer:
             if vectorizer_path:
                 with open(vectorizer_path, 'rb') as f:
                     self.vectorizer = pickle.load(f)
+        
+        def clean_text(self, text):
+            """
+                text: a string
+                
+                return: modified initial string
+            """
+            text = text.lower() # lowercase text
+            text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
+            text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
+            text = re.sub(r'\W+', '', text)
+            text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
+            return text
+        
+        def preprocess(self, X):
+            cleaned_X = []
+            for plot in X:
+                cleaned_X.append(self.clean_text(plot))
+            return cleaned_X
         
         def get_avg_embeddings(self, data):
             average_embeddings = []
@@ -164,8 +207,9 @@ class Inferencer:
             average_embeddings = np.array(average_embeddings)
             
             return average_embeddings
-            
+
         def predict_proba(self, X):
+            X = self.preprocess(X)
             if self.vectorizer:
                 # print(X)
                 # vectorize sample
@@ -184,6 +228,82 @@ class Inferencer:
             
             return output
         
+    class doc2vec_pipeline:
+        def __init__(self, model, model_path='./vectorizers/doc2vec.model'):
+            self.embed = gensim.models.Doc2Vec.load(model_path)
+            self.model = model
+        
+        def clean_text(self, text):
+            """
+                text: a string
+                
+                return: modified initial string
+            """
+            text = text.lower() # lowercase text
+            text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
+            text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
+            text = re.sub(r'\W+', '', text)
+            text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
+            return text
+        
+        def preprocess(self, X):
+            cleaned_X = []
+            for plot in X:
+                cleaned_X.append(self.clean_text(plot))
+            return cleaned_X
+        
+        def predict_proba(self, X):
+            X = self.preprocess(X)
+            X = gensim.utils.simple_preprocess(X[0])
+            embedding = self.embed.infer_vector(X)
+            embedding = embedding.reshape(1, -1)
+            
+            output = self.model.predict_proba(embedding)
+            
+            return output
+    
+    class nn_pipeline:
+        def __init__(self, model):
+            self.model = model
+        
+        def clean_text(self, text):
+            """
+                text: a string
+                
+                return: modified initial string
+            """
+            text = text.lower() # lowercase text
+            text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
+            text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
+            text = re.sub(r'\W+', '', text)
+            text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
+            return text
+        
+        def tokenize(self, X):
+            tokenizer = None
+            with open('./vectorizers/gru_tokenizer.pickle', 'rb') as handle:
+                tokenizer = pickle.load(handle)
+            
+            word_index = tokenizer.word_index
+            print('Found %s unique tokens.' % len(word_index))
+
+            X = tokenizer.texts_to_sequences(X)
+            X = pad_sequences(X, maxlen=MAX_SEQUENCE_LENGTH)
+            return X
+        
+        def preprocess(self, X):
+            X = self.clean_text(X)
+            X = self.tokenize(X)
+            return X
+
+        def predict_proba(self, X):
+            preprocessed_X = []
+            for plot in X:
+                preprocessed_X.append(self.preprocess(plot))
+            
+            output = self.model.predict_proba(preprocessed_X)
+
+            return output
     
     def lime_explain(self, pipeline, genre, sample_X, is_bow=False):
         # get index of genre 
@@ -206,8 +326,16 @@ class Inferencer:
             pipeline = self.word2vec_pipeline(model, embedding_matrix, vectorizer_path=f'vectorizers/tfidf_vectorizer.pkl')
             return self.lime_explain(pipeline, self.genre, self.sample_X)
         elif self.embed_type == 'tfidf' or self.embed_type == 'bow':
-            pipeline = self.vector_pipeline(f'vectorizers/{self.embed_type}_vectorizer.pkl')
+            pipeline = self.vector_pipeline(self.md.model.model, f'vectorizers/{self.embed_type}_vectorizer.pkl')
             return self.lime_explain(pipeline, self.genre, self.sample_X, is_bow=True)
+        elif self.embed_type == 'd2v':
+            model = self.md.model.model
+            pipeline = self.doc2vec_pipeline(model)
+            return self.lime_explain(pipeline, self.genre, self.sample_X)
+        else:
+            model = self.md.model.model
+            pipeline = self.nn_pipeline(model)
+            return self.lime_explain(pipeline, self.genre, self.sample_X)
     
     def vectorizer_inf(self, vectorizer_path):
         #load vectorizer
@@ -281,8 +409,7 @@ class Inferencer:
         text = text.lower() # lowercase text
         text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
         text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
-        text = text.replace('x', '')
-    #    text = re.sub(r'\W+', '', text)
+        text = re.sub(r'\W+', '', text)
         text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
         return text
 
