@@ -1,0 +1,8 @@
+Predict time: 9.29905390739441
+Accuracy: 0.0
+Hamming Score: 0.9101874325782093
+Jaccard Score: 0.0
+Hit Rate: 0.0
+F1 Score: 0.0
+Precision Score: 1.0
+Recall Score: 0.0

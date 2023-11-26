@@ -147,14 +147,17 @@ class Inferencer:
                         if feature == word:
                             weight = score
                             break
-                    if weight == 0:
-                        print(f'Word {word} not found in tfidf features')
+                    # if weight == 0:
+                    #     print(f'Word {word} not found in tfidf features')
                     if word in self.word2idx:
                         plot_embeddings.append(self.embedding_matrix[self.word2idx[word]] * weight)
                     else:
                         plot_embeddings.append(self.embedding_matrix[self.word2idx['<UNK>']] * weight)
                     weight_sum += weight
                 plot_embeddings = np.array(plot_embeddings)
+                
+                if weight_sum == 0:
+                    weight_sum = 1
                 
                 average_embeddings.append(np.mean(plot_embeddings, axis=0) / weight_sum)
                 
@@ -164,11 +167,14 @@ class Inferencer:
             
         def predict_proba(self, X):
             if self.vectorizer:
+                # print(X)
                 # vectorize sample
                 transformed = self.vectorizer.transform(X)
                 
+                sample_X = [word_tokenize(plot) for plot in X]
+                
                 # get weighted embeddings
-                embeds = self.get_weighted_embeddings(X, transformed, self.vectorizer.get_feature_names_out())
+                embeds = self.get_weighted_embeddings(sample_X, transformed, self.vectorizer.get_feature_names_out())
                 
             else:
                 # get average embeddings
@@ -374,7 +380,7 @@ class Inferencer:
 
 def lime_run(model, word_embeddings='w2v', load_models=True, plot_sample=None, genre=None):
     
-    if 'gru' in model:
+    if 'gru' in model or 'trf' in model:
         inf = Inferencer(plot_sample=plot_sample, model=model)
         return inf.gru_inference()
     
@@ -387,7 +393,7 @@ def streamlit_run(model, word_embeddings='w2v', load_models=True, plot_sample=No
     if plot_sample:
         # run inference on a single movie plot
         
-        if 'gru' in model:
+        if 'gru' in model or 'trf' in model:
             inf = Inferencer(plot_sample=plot_sample, model=model)
             return inf.gru_inference()
         

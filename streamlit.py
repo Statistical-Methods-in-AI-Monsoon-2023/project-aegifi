@@ -46,7 +46,7 @@ with col1:
     st.markdown('### Model Selection')
     models = st.multiselect(
         'Select the models you want to run inference on:',
-        ['Binary Naive Bayes', 'Multinomial Naive Bayes', 'XGBoost', 'Binary GRU', 'Rank GRU', 'Multinomial GRU'],
+        ['Binary Naive Bayes', 'Multinomial Naive Bayes', 'XGBoost', 'Binary GRU', 'Rank GRU', 'Multinomial GRU', 'Transformer'],
     )
 
 with col1:
@@ -144,7 +144,8 @@ model_code = {
     "XGBoost": "xgb",
     "Binary GRU": "bgru",
     "Rank GRU": "rgru",
-    "Multinomial GRU": "mgru"
+    "Multinomial GRU": "mgru",
+    "Transformer": "trf"
 }
 
 embed_code = {
@@ -209,7 +210,7 @@ if run_inference or run_inference_test:
                 st.session_state.outputs = []
             
             for model in models:
-                if model in ['Binary GRU', 'Rank GRU', 'Multinomial GRU']:
+                if model in ['Binary GRU', 'Rank GRU', 'Multinomial GRU', 'Transformer']:
                     out = streamlit_run(model_code[model], word_embeddings=None, load_models=True, plot_sample=st.session_state.sample_plot)
                     
                     if st.session_state.sample_plot:
@@ -278,17 +279,7 @@ if run_inference or run_inference_test:
                 st.markdown(f'### {metric}')
                 st.bar_chart(dfs_2[metric]['df'], x='Model', y='Value')
 
-def map_to_colormap_hex(word_tuples, colormap='viridis'):
-    """
-    Map a value in the range [-1, 1] to a hexadecimal color in a specified colormap.
-
-    Parameters:
-    - value (float): The value to be mapped to a color.
-    - colormap (str): The name of the colormap to use (default is 'viridis').
-
-    Returns:
-    - hex_color (str): Hexadecimal representation of the color.
-    """
+def map_to_colormap_hex(word_tuples, colormap='RdBu'):
     # get the max and min values
     max_value = max(word_tuples, key=lambda x: x[1])[1]
     min_value = min(word_tuples, key=lambda x: x[1])[1]
@@ -302,7 +293,7 @@ def map_to_colormap_hex(word_tuples, colormap='viridis'):
     word_tuples = [(word, (value - min_value) / (max_value - min_value)) for word, value in word_tuples]
 
     # map the values to 0 - 1 range
-    word_tuples = [(word, (value + 1) / 2) for word, value in word_tuples]
+    # word_tuples = [(word, (value + 1) / 2) for word, value in word_tuples]
     
     # map to the colormap
     word_tuples = [(word, plt.get_cmap(colormap)(value)) for word, value in word_tuples]

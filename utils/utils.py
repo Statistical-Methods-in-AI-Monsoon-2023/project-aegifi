@@ -68,6 +68,16 @@ def load_d2v():
     
     return X_train, X_test, y_train, y_test
 
+def load_bert():
+    X = np.load('vectorised_data/X_bert.npy')
+    y = np.load('vectorised_data/y.npy')
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    
+    print('Loaded data')
+    
+    return X_train, X_test, y_train, y_test
+
 def load_data(word_embeddings='tfidf'):
     loaders = {
         'gru': load_gru,
@@ -75,7 +85,8 @@ def load_data(word_embeddings='tfidf'):
         'bow': load_bow,
         'tf_w2v': load_tf_w2v,
         'tfidf': load_tfidf,
-        'd2v': load_d2v
+        'd2v': load_d2v,
+        'bert': load_bert
     }
 
     return loaders[word_embeddings]()
@@ -113,6 +124,7 @@ class MetricReader:
             'mnb_w2v': 'Multinomial Naive Bayes w/ Word 2 Vec',
             'mnb_bow': 'Multinomial Naive Bayes w/ Bag of Words',
             'mnb_tf_w2v': 'Multinomial Naive Bayes w/ TF-IDF Weighted Word 2 Vec',
+            'trf': 'Transformer'
         }
     
     def get_model_name(self, file_path):
@@ -134,7 +146,8 @@ class MetricReader:
             'multi_nb_bow': 'mnb_bow',
             'multi_nb_tf_w2v': 'mnb_tf_w2v',
             'binary_nb_d2v': 'bnb_d2v',
-            'xgb_d2v': 'xgb_d2v'
+            'xgb_d2v': 'xgb_d2v',
+            'transformer': 'trf'
         }
         
         for model_name in model_dict:

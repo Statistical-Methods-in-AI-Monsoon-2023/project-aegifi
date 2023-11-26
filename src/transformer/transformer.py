@@ -158,9 +158,9 @@ class Transformer:
         file_path = f'./src/transformer/metrics/{file_name}'
 
         with open(file_path, 'w') as f:
-            f.write(f'Loaded from {self.model_name}\n')
-            f.write(f'params: {self.params}\n')
-            self.model.summary(print_fn=lambda x: f.write(x + '\n'))
+            # f.write(f'Loaded from {self.model_name}\n')
+            # f.write(f'params: {self.params}\n')
+            # self.model.summary(print_fn=lambda x: f.write(x + '\n'))
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(y_test, self.preds)}\n')
