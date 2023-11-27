@@ -79,8 +79,6 @@ print("Time taken by vocab creation: ", time() - st)
 with open('vectorizers/word2idx.json', 'w') as f:
     json.dump(word2idx, f, indent=4)
     
-exit()
-
 print("Creating Embedding Matrix...")
 
 embedding_dim = 300

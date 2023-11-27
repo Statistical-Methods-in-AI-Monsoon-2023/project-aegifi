@@ -221,6 +221,7 @@ class Inferencer:
                 embeds = self.get_weighted_embeddings(sample_X, transformed, self.vectorizer.get_feature_names_out())
                 
             else:
+                sample_X = [word_tokenize(plot) for plot in X]
                 # get average embeddings
                 embeds = self.get_avg_embeddings(X)
                 
@@ -328,12 +329,12 @@ class Inferencer:
     def run_lime(self):
         if self.embed_type == 'w2v':
             model = self.md.model.model
-            embedding_matrix = np.load(f'vectorised_data/X_{self.embed_type}.npy')
+            embedding_matrix = np.load(f'vectorizers/embedding_matrix_w2v.npy')
             pipeline = self.word2vec_pipeline(model, embedding_matrix)
             return self.lime_explain(pipeline, self.genre, self.sample_X)
         elif self.embed_type == 'tf_w2v':
             model = self.md.model.model
-            embedding_matrix = np.load(f'vectorised_data/X_{self.embed_type}.npy')
+            embedding_matrix = np.load(f'vectorizers/embedding_matrix_w2v.npy')
             pipeline = self.word2vec_pipeline(model, embedding_matrix, vectorizer_path=f'vectorizers/tfidf_vectorizer.pkl')
             return self.lime_explain(pipeline, self.genre, self.sample_X)
         elif self.embed_type == 'tfidf' or self.embed_type == 'bow':
@@ -473,13 +474,12 @@ class Inferencer:
             
             self.sample_X = [word_tokenize(plot) for plot in self.sample_X]
             
-            # get weighted embeddings
             embeds = self.get_weighted_embeddings(self.sample_X, embedding_matrix, word2idx, transformed, vectorizer.get_feature_names_out())
             print(embeds)
             
         else:
+            self.sample_X = [word_tokenize(plot) for plot in self.sample_X]
             
-            # get average embeddings
             embeds = self.get_avg_embeddings(self.sample_X, embedding_matrix, word2idx)
             
         output = self.md.model.model.predict(embeds)[0]
@@ -504,7 +504,7 @@ class Inferencer:
             vectorizer_path = f'vectorizers/{vectorizer_type}_vectorizer.pkl'
             return self.vectorizer_inf(vectorizer_path)
         elif vectorizer_type == 'w2v' or vectorizer_type == 'tf_w2v':
-            embedding_path = f'vectorised_data/X_{vectorizer_type}.npy'
+            embedding_path = f'vectorizers/embedding_matrix_w2v.npy'
             vectorizer_path = None
             if vectorizer_type == 'tf_w2v':
                 vectorizer_path = f'vectorizers/tfidf_vectorizer.pkl'
