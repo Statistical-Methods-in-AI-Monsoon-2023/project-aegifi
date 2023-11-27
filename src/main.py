@@ -254,11 +254,13 @@ class Inferencer:
         
         def predict_proba(self, X):
             X = self.preprocess(X)
-            X = gensim.utils.simple_preprocess(X[0])
-            embedding = self.embed.infer_vector(X)
-            embedding = embedding.reshape(1, -1)
+            embeddings = []
+            for row in X:
+                embeddings.append(self.embed.infer_vector(gensim.utils.simple_preprocess(row)))
+            embeddings = np.array(embeddings)
+            print(embeddings.shape)
             
-            output = self.model.predict_proba(embedding)
+            output = self.model.predict_proba(embeddings)
             
             return output
     
@@ -319,7 +321,7 @@ class Inferencer:
         if self.embed_type is None:
             explanation = explainer.explain_instance(sample_X[0], pipeline.predict_proba, num_features=10, labels=(genre_index,), num_samples=100)
         else:
-            explanation = explainer.explain_instance(sample_X[0], pipeline.predict_proba, num_features=10, labels=(genre_index,))
+            explanation = explainer.explain_instance(sample_X[0], pipeline.predict_proba, num_features=10, labels=(genre_index,), num_samples=1000)
         
         return explanation.as_list(label=genre_index)
     

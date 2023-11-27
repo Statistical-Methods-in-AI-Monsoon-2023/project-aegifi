@@ -271,13 +271,13 @@ if run_inference or run_inference_test:
         for metric in dfs_1:
             with cols_1[dfs_1[metric]['col_idx']]:
                 st.markdown(f'### {metric}')
-                st.bar_chart(dfs_1[metric]['df'], x='Model', y='Value')
+                st.bar_chart(dfs_1[metric]['df'], x='Model', y='Value', color='Model')
         
         cols_2 = st.columns(4)
         for metric in dfs_2:
             with cols_2[dfs_2[metric]['col_idx']]:
                 st.markdown(f'### {metric}')
-                st.bar_chart(dfs_2[metric]['df'], x='Model', y='Value')
+                st.bar_chart(dfs_2[metric]['df'], x='Model', y='Value', color='Model')
 
 def map_to_colormap_hex(word_tuples, colormap='RdBu'):
     # get the max and min values

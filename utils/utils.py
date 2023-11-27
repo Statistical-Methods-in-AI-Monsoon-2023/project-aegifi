@@ -12,7 +12,7 @@ def load_w2v():
     X = np.load('vectorised_data/X_w2v.npy')
     y = np.load('vectorised_data/y.npy')
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
@@ -22,7 +22,7 @@ def load_tf_w2v():
     X = np.load('vectorised_data/X_tf_w2v.npy')
     y = np.load('vectorised_data/y.npy')
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
@@ -32,7 +32,7 @@ def load_gru():
     X = np.load('vectorised_data/X_gru.npy')
     y = np.load('vectorised_data/y.npy')
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
@@ -42,7 +42,7 @@ def load_bow():
     X = scipy.sparse.load_npz('vectorised_data/X_bow.npz')
     y = np.load('vectorised_data/y.npy')
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
@@ -52,7 +52,7 @@ def load_tfidf():
     X = scipy.sparse.load_npz('vectorised_data/X_tfidf.npz')
     y = np.load('vectorised_data/y.npy')
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
@@ -62,7 +62,7 @@ def load_d2v():
     X = np.load('vectorised_data/X_doc2vec.npy')
     y = np.load('vectorised_data/y.npy')
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
@@ -72,7 +72,7 @@ def load_bert():
     X = np.load('vectorised_data/X_bert.npy')
     y = np.load('vectorised_data/y.npy')
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     print('Loaded data')
     
