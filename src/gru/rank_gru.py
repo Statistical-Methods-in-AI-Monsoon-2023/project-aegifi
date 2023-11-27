@@ -27,7 +27,8 @@ EMBEDDING_DIM = 100
 class CustomSaver(Callback):
     def on_epoch_end(self, epoch, logs={}):
         # save after every epoch
-        self.model.save(f'./src/gru/pretrained/rank_gru_{epoch}.keras')
+        if epoch % 5 == 0:
+            self.model.save(f'./src/gru/pretrained/rank_gru_{epoch}.keras')
 
 class RankGRU:
     def __init__(self, load_models=False):
@@ -61,7 +62,7 @@ class RankGRU:
         
         self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'rank_gru_7.keras'
+            self.model_name = 'rank_gru_9.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
             self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_rank.json')

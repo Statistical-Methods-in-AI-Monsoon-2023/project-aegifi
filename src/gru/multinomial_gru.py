@@ -25,7 +25,8 @@ EMBEDDING_DIM = 100
 
 class CustomSaver(Callback):
     def on_epoch_end(self, epoch, logs={}):
-        self.model.save(f'./src/gru/pretrained/multinomial_gru_{epoch}.keras')
+        if epoch % 5 == 0:
+            self.model.save(f'./src/gru/pretrained/multinomial_gru_{epoch}.keras')
 
 class MultinomialGRU:
     def __init__(self, load_models=False):
@@ -58,7 +59,7 @@ class MultinomialGRU:
         
         self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'multinomial_gru_5.keras'
+            self.model_name = 'multinomial_gru_9.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
             self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_multi.json')

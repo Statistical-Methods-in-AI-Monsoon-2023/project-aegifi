@@ -24,8 +24,8 @@ EMBEDDING_DIM = 100
 
 class CustomSaver(Callback):
     def on_epoch_end(self, epoch, logs={}):
-        # save after every epoch
-        self.model.save(f'./src/gru/pretrained/binary_gru_{epoch}.keras')
+        if epoch % 5 == 0:
+            self.model.save(f'./src/gru/pretrained/binary_gru_{epoch}.keras')
 
 class BinaryGRU:
     def __init__(self, load_models=False):
@@ -57,7 +57,7 @@ class BinaryGRU:
                 print(e)
         
         if load_models:
-            self.model_name = 'binary_gru_5.keras'
+            self.model_name = 'binary_gru_9.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
         else:
@@ -66,6 +66,7 @@ class BinaryGRU:
             model.add(SpatialDropout1D(self.params['dropout']))
             for i in range(self.params['layers']):
                 model.add(GRU(self.params['units'], return_sequences=i != self.params['layers']-1, recurrent_dropout=self.params['dropout'], dropout=self.params['dropout']))
+                # model.add(tf.keras.layers.Flatten())
                 # model.add(Dropout(self.params['dropout']))
                 model.add(LayerNormalization())
             # model.add(Dropout(self.params['dropout']))

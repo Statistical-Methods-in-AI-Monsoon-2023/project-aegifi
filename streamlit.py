@@ -311,14 +311,17 @@ def map_to_colormap_hex(word_tuples, colormap='RdBu'):
             
 def run_lime(model, word_embeddings, genre):
     with col2:
-        st.write(f'### LIME Explanation for {genre} prediction by {model} with {rev_embed_code[word_embeddings]}')
+        if word_embeddings == None or word_embeddings == '':
+            st.write(f'### LIME Explanation for {genre} prediction by {model}')
+        else:
+            st.write(f'### LIME Explanation for {genre} prediction by {model} with {rev_embed_code[word_embeddings]}')
         st.write('---')
         
         with st.spinner('LIME explanation in progress...'):
             out = lime_run(model_code[model], word_embeddings=word_embeddings, genre=genre, plot_sample=st.session_state.sample_plot)
         
         # out is list of tuples of (word, importance) pairs
-        
+        print(out)
         # color the words based on their importance and display the entire sample plot with the words colored
         word_color_dict = map_to_colormap_hex(out)
         
@@ -403,7 +406,7 @@ if st.session_state.outputs is not None:
             for i, output_list in enumerate([outputs_1, outputs_2, outputs_3]):
                 for output in output_list:
                     header = ''
-                    if output['word_embeddings'] is None:
+                    if output['word_embeddings'] is None or output['word_embeddings'] == '':
                         output['word_embeddings'] = ''
                         header = f'#### {output["model"]}'
                     else:

@@ -56,7 +56,7 @@ class Model:
             raise Exception('Invalid model name')
 
 class Inferencer:
-    def __init__(self, plot_sample, model, word_embeddings='w2v', genre=None):
+    def __init__(self, plot_sample, model, word_embeddings=None, genre=None):
         self.sample_X = [plot_sample]
         self.model_name = model
         self.embed_type = word_embeddings
@@ -105,7 +105,7 @@ class Inferencer:
             text = text.lower() # lowercase text
             text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
             text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
-            text = re.sub(r'\W+', '', text)
+            # text = re.sub(r'\W+', '', text)
             text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
             return text
         
@@ -149,7 +149,7 @@ class Inferencer:
             text = text.lower() # lowercase text
             text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
             text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
-            text = re.sub(r'\W+', '', text)
+            # text = re.sub(r'\W+', '', text)
             text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
             return text
         
@@ -242,7 +242,7 @@ class Inferencer:
             text = text.lower() # lowercase text
             text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
             text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
-            text = re.sub(r'\W+', '', text)
+            # text = re.sub(r'\W+', '', text)
             text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
             return text
         
@@ -275,7 +275,7 @@ class Inferencer:
             text = text.lower() # lowercase text
             text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
             text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
-            text = re.sub(r'\W+', '', text)
+            # text = re.sub(r'\W+', '', text)
             text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
             return text
         
@@ -285,10 +285,12 @@ class Inferencer:
                 tokenizer = pickle.load(handle)
             
             word_index = tokenizer.word_index
-            print('Found %s unique tokens.' % len(word_index))
-
-            X = tokenizer.texts_to_sequences(X)
+            # print('Found %s unique tokens.' % len(word_index))
+            # print("Before token", X)
+            X = tokenizer.texts_to_sequences([X])
+            # print("After token", X)
             X = pad_sequences(X, maxlen=MAX_SEQUENCE_LENGTH)
+            # print("After pad", X.shape)
             return X
         
         def preprocess(self, X):
@@ -297,10 +299,14 @@ class Inferencer:
             return X
 
         def predict_proba(self, X):
+            # print(X[0])
             preprocessed_X = []
             for plot in X:
-                preprocessed_X.append(self.preprocess(plot))
-            
+                plot_temp = self.preprocess(plot)
+                # print(plot_temp.shape)
+                preprocessed_X.append(plot_temp.flatten())
+            # print(preprocessed_X)
+            preprocessed_X = np.array(preprocessed_X)
             output = self.model.predict_proba(preprocessed_X)
 
             return output
@@ -310,7 +316,10 @@ class Inferencer:
         genre_index = self.classes.index(genre)
         
         explainer = LimeTextExplainer(class_names=self.classes, bow=is_bow)
-        explanation = explainer.explain_instance(sample_X[0], pipeline.predict_proba, num_features=10, labels=(genre_index,))
+        if self.embed_type is None:
+            explanation = explainer.explain_instance(sample_X[0], pipeline.predict_proba, num_features=10, labels=(genre_index,), num_samples=100)
+        else:
+            explanation = explainer.explain_instance(sample_X[0], pipeline.predict_proba, num_features=10, labels=(genre_index,))
         
         return explanation.as_list(label=genre_index)
     
@@ -409,7 +418,7 @@ class Inferencer:
         text = text.lower() # lowercase text
         text = REPLACE_BY_SPACE_RE.sub(' ', text) # replace REPLACE_BY_SPACE_RE symbols by space in text. substitute the matched string in REPLACE_BY_SPACE_RE with space.
         text = BAD_SYMBOLS_RE.sub('', text) # remove symbols which are in BAD_SYMBOLS_RE from text. substitute the matched string in BAD_SYMBOLS_RE with nothing. 
-        text = re.sub(r'\W+', '', text)
+        # text = re.sub(r'\W+', '', text)
         text = ' '.join(word for word in text.split() if word not in STOPWORDS) # remove stopwors from text
         return text
 
@@ -421,9 +430,9 @@ class Inferencer:
             tokenizer = pickle.load(handle)
         
         word_index = tokenizer.word_index
-        print('Found %s unique tokens.' % len(word_index))
+        # print('Found %s unique tokens.' % len(word_index))
 
-        X = tokenizer.texts_to_sequences(X)
+        X = tokenizer.texts_to_sequences([X])
         X = pad_sequences(X, maxlen=MAX_SEQUENCE_LENGTH)
         return X
 
@@ -508,8 +517,8 @@ class Inferencer:
 def lime_run(model, word_embeddings='w2v', load_models=True, plot_sample=None, genre=None):
     
     if 'gru' in model or 'trf' in model:
-        inf = Inferencer(plot_sample=plot_sample, model=model)
-        return inf.gru_inference()
+        inf = Inferencer(plot_sample=plot_sample, model=model, genre=genre)
+        return inf.run_lime()
     
     inf = Inferencer(plot_sample=plot_sample, model=model, word_embeddings=word_embeddings, genre=genre)
     return inf.run_lime()

@@ -6,6 +6,7 @@ embeddings/*
 pretrained
 
 env/
+new/
 
 word2vec/
 
