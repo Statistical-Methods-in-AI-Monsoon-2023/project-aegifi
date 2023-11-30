@@ -62,7 +62,7 @@ class RankGRU:
         
         self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'rank_gru_9.keras'
+            self.model_name = 'rank_gru.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
             self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_rank.json')
@@ -142,14 +142,13 @@ class RankGRU:
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(y_test, self.preds)}\n')
-            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="micro")}\n')
+            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="samples")}\n')
             f.write(f'Hit Rate: {hit_rate(y_test, self.preds)}\n')
             f.write(f'F1 Score: {f1_score(y_test, self.preds, average="samples", zero_division=True)}\n')
             f.write(f'Precision Score: {precision_score(y_test, self.preds, average="samples", zero_division=True)}\n')
             f.write(f'Recall Score: {recall_score(y_test, self.preds, average="samples", zero_division=True)}\n')
 
     def save_model(self):
-        # self.model.save(f'./src/gru/pretrained/rank_gru.keras')
         self.xgb_model.save_model(f'./src/gru/pretrained/xgb_reg_rank.json')
 
 class RankGRURunner:
@@ -174,8 +173,13 @@ class RankGRURunner:
         self.model.fit(self.X_train, self.y_train)
         self.model.save_model()
     
-    def run_inference(self):
+    def run_inference(self, save_preds=False):
         self.load_data()
         
-        self.model.predict(self.X_test)
+        preds = self.model.predict(self.X_test)
+        
+        if save_preds:
+            np.save(f'EDA/preds/rank_gru.npy', preds)
+            np.save(f'EDA/preds/y_test_rank_gru.npy', self.y_test)
+            
         self.model.write_metrics(self.y_test)

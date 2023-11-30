@@ -545,12 +545,11 @@ def streamlit_run(model, word_embeddings='w2v', load_models=True, plot_sample=No
         md.model.run_training()
 
 if __name__ == '__main__':
-    
-    # take in command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--model', type=str, default='xgb', help='Model to run')
     parser.add_argument('-w', '--word_embeddings', type=str, default='w2v', help='Word embeddings to use')
     parser.add_argument('-l', '--load_models', action='store_true', help='Whether to load pretrained models')
+    parser.add_argument('--save-preds', action='store_true', help='Whether to save the predictions')
     parser.add_argument('--train', action='store_true', help='Whether to train the model')
     parser.add_argument('--infer', action='store_true', help='Whether to run inference on the model')
 
@@ -561,4 +560,4 @@ if __name__ == '__main__':
     if args.train:
         md.model.run_training()
     if args.infer:
-        md.model.run_inference()
+        md.model.run_inference(save_preds=args.save_preds)

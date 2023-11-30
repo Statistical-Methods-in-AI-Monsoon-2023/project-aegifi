@@ -13,39 +13,6 @@ import sys
 sys.path[0] += '/../../utils/'
 from utils import load_data, hit_rate
 
-# if __name__ == '__main__':
-#     X_train, X_test, y_train, y_test, prior_probs = load_data(bow=True)
-
-#     model = MultinomialNB(class_prior=prior_probs)
-#     train_time = time()
-#     model.fit(X_train, y_train)
-#     train_time = time() - train_time
-
-#     # predict on test data
-#     predict_time = time()
-#     y_pred = model.predict_proba(X_test)
-#     # select the preds with prob greater than prior prob
-#     y_pred = (y_pred > prior_probs).astype(int)
-#     predict_time = time() - predict_time
-
-#     for i in range(10):
-#         print(X_test[i],y_pred[i], y_test[i])
-
-    # predictions = 
-    
-    # file_name = f'multinomial_nb_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
-    # file_path = f'./metrics/{file_name}'
-
-    # with open(file_path, 'w') as f:
-    #     f.write(f'Train time: {train_time}\n')
-    #     f.write(f'Predict time: {predict_time}\n')
-    #     f.write(f'Accuracy: {accuracy_score(y_test, y_pred)}\n')
-    #     f.write(f'Hamming Score: {1 - hamming_loss(y_test, y_pred)}\n')
-    #     f.write(f'Jaccard Score: {jaccard_score(y_test, y_pred, average="micro")}\n')
-    #     f.write(f'Hit Rate: {hit_rate(y_test, y_pred)}\n')
-    #     f.write('Classification Report:\n')
-    #     f.write(f'{classification_report(y_test, y_pred, zero_division=True)}\n')
-
 class MultinomialNBRunner:
     def __init__(self, load_models=False, word_embeddings='w2v'):
         self.X_train = None
@@ -83,7 +50,6 @@ class MultinomialNBRunner:
         self.save_model()
         print(f"Train time: {self.train_time}")
 
-
     
     def write_metrics(self):
         file_name = f'multi_nb_{self.word_embeddings}_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
@@ -92,18 +58,23 @@ class MultinomialNBRunner:
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(self.y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(self.y_test, self.preds)}\n')
-            f.write(f'Jaccard Score: {jaccard_score(self.y_test, self.preds, average="micro")}\n')
+            f.write(f'Jaccard Score: {jaccard_score(self.y_test, self.preds, average="samples")}\n')
             f.write(f'Hit Rate: {hit_rate(self.y_test, self.preds)}\n')
             f.write(f'F1 Score: {f1_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
             f.write(f'Precision Score: {precision_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
             f.write(f'Recall Score: {recall_score(self.y_test, self.preds, average="samples", zero_division=True)}\n')
     
-    def run_inference(self):
+    def run_inference(self, save_preds=False):
         self.load_data()
         self.load_model()
         print("Predicting...")
         self.predict_time = time()
         self.preds = self.model.predict(self.X_test)
         self.predict_time = time() - self.predict_time
+        
+        if save_preds:
+            np.save(f'EDA/preds/multi_nb_{self.word_embeddings}.npy', self.preds)
+            np.save(f'EDA/preds/y_test_multi_nb_{self.word_embeddings}.npy', self.y_test)
+        
         self.write_metrics()
         print("Predicted")

@@ -51,7 +51,7 @@ class MultinomialGRU:
         gpus = tf.config.list_physical_devices('GPU')
         if gpus:
             try:
-                tf.config.set_visible_devices(gpus[0], 'GPU')
+                tf.config.set_visible_devices(gpus[2], 'GPU')
                 logical_gpus = tf.config.list_logical_devices('GPU')
                 print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPU")
             except RuntimeError as e:
@@ -59,7 +59,7 @@ class MultinomialGRU:
         
         self.xgb_model = xgb.XGBRegressor(verbosity=2, tree_method="hist", n_jobs=39)
         if load_models:
-            self.model_name = 'multinomial_gru_9.keras'
+            self.model_name = 'multinomial_gru.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
             self.xgb_model.load_model(f'./src/gru/pretrained/xgb_reg_multi.json')
@@ -130,7 +130,7 @@ class MultinomialGRU:
         preds = self.model.predict(X)
         pred_thresholds = self.xgb_model.predict(preds)
         self.preds = (preds >= pred_thresholds[:, None]).astype(int)
-        
+                
         self.predict_time = time.time() - st
         print(f"Predict time: {self.predict_time}")
         return self.preds
@@ -153,7 +153,7 @@ class MultinomialGRU:
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(y_test, self.preds)}\n')
-            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="micro")}\n')
+            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="samples")}\n')
             f.write(f'Hit Rate: {hit_rate(y_test, self.preds)}\n')
             f.write(f'F1 Score: {f1_score(y_test, self.preds, average="samples", zero_division=True)}\n')
             f.write(f'Precision Score: {precision_score(y_test, self.preds, average="samples", zero_division=True)}\n')
@@ -186,8 +186,13 @@ class MultinomialGRURunner:
         self.model.fit(self.X_train, self.y_train)
         self.model.save_model()
     
-    def run_inference(self):
+    def run_inference(self, save_preds=False):
         self.load_data()
         
-        self.model.predict(self.X_test)
+        preds = self.model.predict(self.X_test)
+        
+        if save_preds:
+            np.save(f'EDA/preds/multinomial_gru.npy', preds)
+            np.save(f'EDA/preds/y_test_multinomial_gru.npy', self.y_test)
+            
         self.model.write_metrics(self.y_test)

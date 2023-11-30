@@ -58,6 +58,7 @@ class XGBModel:
         self.predict_time = time.time() - st
         self.preds = y_pred
         print(f"Predict time: {self.predict_time}")
+        
         return y_pred
     
     def predict_proba(self, X):
@@ -76,7 +77,7 @@ class XGBModel:
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(y_test, self.preds)}\n')
-            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="micro")}\n')
+            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="samples")}\n')
             f.write(f'Hit Rate: {hit_rate(y_test, self.preds)}\n')
             f.write(f'F1 Score: {f1_score(y_test, self.preds, average="samples", zero_division=True)}\n')
             f.write(f'Precision Score: {precision_score(y_test, self.preds, average="samples", zero_division=True)}\n')
@@ -108,8 +109,13 @@ class XGBRunner:
         self.model.fit(self.X_train, self.y_train)
         self.model.save_model()
     
-    def run_inference(self):
+    def run_inference(self, save_preds=False):
         self.load_data()
         
-        self.model.predict(self.X_test)
+        preds = self.model.predict(self.X_test)
+        
+        if save_preds:
+            np.save(f'EDA/preds/xgb_{self.word_embeddings}.npy', preds)
+            np.save(f'EDA/preds/y_test_xgb_{self.word_embeddings}.npy', self.y_test)
+        
         self.model.write_metrics(self.y_test)

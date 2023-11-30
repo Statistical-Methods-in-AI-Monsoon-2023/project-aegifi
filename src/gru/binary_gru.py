@@ -57,7 +57,7 @@ class BinaryGRU:
                 print(e)
         
         if load_models:
-            self.model_name = 'binary_gru_9.keras'
+            self.model_name = 'binary_gru.keras'
             self.model = tf.keras.models.load_model(f'./src/gru/pretrained/{self.model_name}')
             print(self.model.summary())
         else:
@@ -94,7 +94,7 @@ class BinaryGRU:
         
         self.preds = self.model.predict(X)
         self.preds = np.round(self.preds)
-        
+                
         self.predict_time = time.time() - st
         print(f"Predict time: {self.predict_time}")
         return self.preds
@@ -121,7 +121,7 @@ class BinaryGRU:
             f.write(f'Predict time: {self.predict_time}\n')
             f.write(f'Accuracy: {accuracy_score(y_test, self.preds)}\n')
             f.write(f'Hamming Score: {1 - hamming_loss(y_test, self.preds)}\n')
-            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="micro")}\n')
+            f.write(f'Jaccard Score: {jaccard_score(y_test, self.preds, average="samples")}\n')
             f.write(f'Hit Rate: {hit_rate(y_test, self.preds)}\n')
             f.write(f'F1 Score: {f1_score(y_test, self.preds, average="samples", zero_division=True)}\n')
             f.write(f'Precision Score: {precision_score(y_test, self.preds, average="samples", zero_division=True)}\n')
@@ -152,8 +152,13 @@ class BinaryGRURunner:
         self.model.fit(self.X_train, self.y_train)
         self.model.save_model()
     
-    def run_inference(self):
+    def run_inference(self, save_preds=False):
         self.load_data()
         
-        self.model.predict(self.X_test)
+        preds = self.model.predict(self.X_test)
+        
+        if save_preds:
+            np.save(f'EDA/preds/binary_gru.npy', preds)
+            np.save(f'EDA/preds/y_test_binary_gru.npy', self.y_test)
+            
         self.model.write_metrics(self.y_test)
