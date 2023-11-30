@@ -72,8 +72,8 @@ class BinaryNBRunner:
         self.predict_time = time() - self.predict_time
         
         if save_preds:
-            np.save(f'EDA/preds/binary_nb_{self.word_embeddings}.npy', self.preds)
-            np.save(f'EDA/preds/y_test_binary_nb_{self.word_embeddings}.npy', self.y_test)
+            np.save(f'EDA/preds/binary_nb.npy', self.preds)
+            np.save(f'EDA/preds/y_test_binary_nb.npy', self.y_test)
         
         self.write_metrics()
         print("Predicted")

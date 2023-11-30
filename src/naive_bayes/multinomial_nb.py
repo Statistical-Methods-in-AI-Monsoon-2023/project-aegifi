@@ -31,6 +31,7 @@ class MultinomialNBRunner:
     def load_data(self):
         print("loading data...")
         self.X_train, self.X_test, self.y_train, self.y_test = load_data(word_embeddings=self.word_embeddings)
+        self.prior_probs = np.sum(self.y_test, axis=0) / self.y_test.shape[0]
     
     def save_model(self):
         # save using joblib
@@ -45,11 +46,11 @@ class MultinomialNBRunner:
         print("Training...")
         self.train_time = time()
         self.model.fit(self.X_train, self.y_train)
+        
         self.train_time = time() - self.train_time
         print("Trained")
         self.save_model()
         print(f"Train time: {self.train_time}")
-
     
     def write_metrics(self):
         file_name = f'multi_nb_{self.word_embeddings}_{datetime.now().strftime("%Y%m%d%H%M")}.txt'
@@ -69,12 +70,14 @@ class MultinomialNBRunner:
         self.load_model()
         print("Predicting...")
         self.predict_time = time()
-        self.preds = self.model.predict(self.X_test)
+        probas = self.model.predict_proba(self.X_test)
+        self.preds = np.where(probas > self.prior_probs, 1, 0)
+        # self.preds = self.model.predict(self.X_test)
         self.predict_time = time() - self.predict_time
-        
+
         if save_preds:
-            np.save(f'EDA/preds/multi_nb_{self.word_embeddings}.npy', self.preds)
-            np.save(f'EDA/preds/y_test_multi_nb_{self.word_embeddings}.npy', self.y_test)
-        
+            np.save(f'EDA/preds/multi_nb.npy', self.preds)
+            np.save(f'EDA/preds/y_test_multi_nb.npy', self.y_test)
+
         self.write_metrics()
         print("Predicted")

@@ -115,7 +115,7 @@ class XGBRunner:
         preds = self.model.predict(self.X_test)
         
         if save_preds:
-            np.save(f'EDA/preds/xgb_{self.word_embeddings}.npy', preds)
-            np.save(f'EDA/preds/y_test_xgb_{self.word_embeddings}.npy', self.y_test)
+            np.save(f'EDA/preds/xgb.npy', preds)
+            np.save(f'EDA/preds/y_test_xgb.npy', self.y_test)
         
         self.model.write_metrics(self.y_test)
